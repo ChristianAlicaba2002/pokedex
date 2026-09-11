@@ -1,4 +1,10 @@
 export type TPokemonData = {
+    results: [
+        {
+            name: string,
+            url: string
+        }
+    ],
     id: number,
     name: string,
     height: number,
@@ -47,3 +53,15 @@ export type TPokemonData = {
     }
 }
 
+export type TPokemon = {
+    id: number
+    name: string
+    sprites: {
+        front_default: string
+    }
+    types: Array<{
+        type: {
+            name: string
+        }
+    }>
+}

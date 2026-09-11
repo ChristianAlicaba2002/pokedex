@@ -11,23 +11,27 @@ on:
       - main
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
+
+    env:
+      EXPO_PUBLIC_API_BASE_URL: https://pokeapi.co/api/v2
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
+          cache: npm
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
-      - name: Build project
-        run: npm run build --if-present
+      - name: Lint
+        run: npm run lint
 
-      - name: Setup Expo CLI
-        run: npm install -g eas-cli
+      - name: Export web bundle
+        run: npx expo export --platform web

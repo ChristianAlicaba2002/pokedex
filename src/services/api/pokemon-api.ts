@@ -1,17 +1,23 @@
-import { TPokemonData } from "@/@types/type";
+import { TPokemon } from "@/@types/type";
 import { api } from "./axios";
 
-const limit = 50
+export const getPokemon = async (offset = 0) => {
+  const res = await api.get<{ results: { name: string; url: string }[] }>(
+    `/pokemon?limit=30&offset=${offset}`
+  );
 
-export const getPokemon = async (name?: string) : Promise<TPokemonData> => {
-  const pokemon = name ? await api.get<TPokemonData[]>(`/pokemon?name=${name}`) : await api.get(`/pokemon?limit=${limit}`);
-  const response = pokemon;
+  const detailed = await Promise.all(
+    res.data.results.map(async (p) => {
+      const detailRes = await api.get(p.url);
+      return detailRes.data;
+    })
+  );
 
-  return response.data;
+  return detailed;
 };
 
-export const getPokemonById = async (id: string) : Promise<TPokemonData> => {
-  const pokemon = await api.get<TPokemonData>(`/pokemon/${id}`)
+export const getPokemonById = async (id: string) : Promise<TPokemon> => {
+  const pokemon = await api.get<TPokemon>(`/pokemon/${id}`)
   const response = pokemon;
 
   return response.data;

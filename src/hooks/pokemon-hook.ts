@@ -1,11 +1,10 @@
 import { getPokemon, getPokemonById } from "@/services/api/pokemon-api";
 import { useQuery } from "@tanstack/react-query";
 
-export const useGetPokemon = (name?: string) => {
+export const useGetPokemon = () => {
   return useQuery({
-    queryKey: ["pokemon", "search", name],
-    queryFn: () => getPokemon(name),
-    enabled: !!name,
+    queryKey: ["pokemon"],
+    queryFn: () => getPokemon(),
   });
 };
 

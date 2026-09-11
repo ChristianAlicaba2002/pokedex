@@ -4,11 +4,11 @@
     "slug": "pokedex",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/pokemon-logo.png",
     "scheme": "pokedex",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "/assets/pokemon-logo.png"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,6 +20,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
+      "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },

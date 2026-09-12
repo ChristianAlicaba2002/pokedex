@@ -18,3 +18,11 @@ export const TYPE_COLORS: Record<string, { bg: string; light: string; dark: stri
     steel: { bg: '#B8B8D0', light: '#F0F0F8', dark: '#787888' },
     fairy: { bg: '#EE99AC', light: '#FFE8F0', dark: '#C86888' },
   };
+
+export function getTypePalette(type: string) {
+  return TYPE_COLORS[type.toLowerCase()] ?? TYPE_COLORS.water;
+}
+
+export function getPokemonArtwork(id: number) {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+}

@@ -16,7 +16,7 @@ export const getPokemon = async (offset = 0) => {
   return detailed;
 };
 
-export const getPokemonById = async (id: string) : Promise<TPokemon> => {
+export const getPokemonById = async (id: number) : Promise<TPokemon> => {
   const pokemon = await api.get<TPokemon>(`/pokemon/${id}`)
   const response = pokemon;
 

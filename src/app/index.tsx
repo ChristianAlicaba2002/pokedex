@@ -4,6 +4,7 @@ import { FeaturedSkeleton, SkeletonCard } from '@/components/skeleton-card';
 import { StickyHeader } from '@/components/sticky-header';
 import { BottomTabInset } from '@/constants/theme';
 import { getPokemon } from '@/services/api/pokemon-api';
+import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -70,7 +71,12 @@ export default function HomeScreen() {
   const isInitialLoading = loading && pokemons.length === 0;
 
   return (
-    <View className="flex-1 bg-[#F0F4FF]">
+    <LinearGradient 
+    colors={['#071B3D', '#0A4D8C', '#14B8C4']}
+    start={{ x: 0, y: 0 }}
+    end={{ x: 1, y: 1 }}
+    className="flex-1"
+    >
       <StatusBar style="light" />
       <View
         pointerEvents="none"
@@ -118,10 +124,10 @@ export default function HomeScreen() {
               <View>
                 <FeaturedPokemonCard item={featured} />
                 <View className="mb-1 mt-1 flex-row items-end justify-between px-1.5">
-                  <Text className="text-lg font-black text-slate-800">
+                  <Text className="text-lg font-black text-white">
                     {search ? 'Matches' : 'Living Dex'}
                   </Text>
-                  <Text className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <Text className="text-xs font-semibold uppercase tracking-wider text-white/65">
                     {filteredPokemons.length} Pokémon
                   </Text>
                 </View>
@@ -137,10 +143,10 @@ export default function HomeScreen() {
                   tintColor="#0A4D8C"
                 />
               </View>
-              <Text className="mt-4 text-lg font-black text-slate-800">
+              <Text className="mt-4 text-lg font-black text-white">
                 No “{search}” in this dex
               </Text>
-              <Text className="mt-1 text-center text-sm text-slate-400">
+              <Text className="mt-1 text-center text-md text-white/65">
                 Try another name, or clear search to keep browsing.
               </Text>
             </View>
@@ -148,12 +154,12 @@ export default function HomeScreen() {
           ListFooterComponent={
             loading && !search ? (
               <View className="py-6">
-                <ActivityIndicator size="large" color="#0A4D8C" />
+                <ActivityIndicator size="large" color="white" />
               </View>
             ) : null
           }
         />
       )}
-    </View>
+    </LinearGradient>
   );
 }

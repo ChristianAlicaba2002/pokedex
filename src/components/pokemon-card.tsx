@@ -3,6 +3,7 @@ import { PokeBallMark } from '@/components/poke-ball-mark';
 import { getPokemonArtwork, getTypePalette } from '@/utils/type-colors';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { SymbolView } from 'expo-symbols';
 import { cssInterop } from 'nativewind';
 import { Pressable, Text, View } from 'react-native';
 
@@ -40,8 +41,20 @@ export function PokemonCard({ item }: { item: TPokemonData }) {
           colors={[palette.bg, palette.dark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          className="min-h-[196px] overflow-hidden rounded-[28px] px-3.5 pt-20">
+          className="min-h-[169px] overflow-hidden rounded-[28px] px-3.5 pt-20">
           <PokeBallMark color="#FFFFFF" size={112} className="absolute -right-7 -top-8" />
+
+          <Pressable
+            accessibilityLabel="Add to favorites"
+            hitSlop={8}
+            className="absolute left-2.5 top-2.5 z-10 h-8 w-8 items-center justify-center rounded-full bg-white/20"
+            style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
+            <SymbolView
+              name={{ ios: 'heart', android: 'favorite', web: 'favorite' }}
+              size={16}
+              tintColor="#FFFFFF"
+            />
+          </Pressable>
 
           <Text className="absolute -top-1 right-3 text-[42px] font-black italic tracking-tighter text-white/20">
             #{String(item.id).padStart(3, '0')}
@@ -84,7 +97,7 @@ export function PokemonCard({ item }: { item: TPokemonData }) {
             source={[{ uri: artwork }, FALLBACK_ART]}
             contentFit="contain"
             transition={200}
-            style={{ width: 96, height: 96 }}
+            style={{ width: 124, height: 124 }}
           />
         </View>
       </View>
@@ -136,7 +149,7 @@ export function FeaturedPokemonCard({ item }: { item: TPokemonData }) {
             source={[{ uri: artwork }, FALLBACK_ART]}
             contentFit="contain"
             transition={240}
-            style={{ width: 132, height: 132 }}
+            style={{ width: 144, height: 144 }}
           />
         </View>
       </LinearGradient>

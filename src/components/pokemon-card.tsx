@@ -41,7 +41,7 @@ export function PokemonCard({ item }: { item: TPokemonData }) {
           colors={[palette.bg, palette.dark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          className="min-h-[169px] overflow-hidden rounded-[28px] px-3.5 pt-20">
+          className="min-h-[184px] overflow-hidden rounded-[28px] px-3.5 pt-20">
           <PokeBallMark color="#FFFFFF" size={112} className="absolute -right-7 -top-8" />
 
           <Pressable
@@ -60,17 +60,17 @@ export function PokemonCard({ item }: { item: TPokemonData }) {
             #{String(item.id).padStart(3, '0')}
           </Text>
 
-          <Text className="text-base font-black capitalize text-white" numberOfLines={1}>
+          <Text className="top-6 text-base font-black capitalize text-white" numberOfLines={1}>
             {item.name}
           </Text>
 
-          <View className="mt-2 flex-row flex-wrap gap-1">
+          <View className="top-6 flex-row flex-wrap gap-1">
             {item.types?.map((t) => (
               <TypeChip key={t.type.name} name={t.type.name} compact />
             ))}
           </View>
 
-          <View className="mt-3 flex-row items-center justify-between rounded-2xl bg-white/15 px-2.5 py-2">
+          <View className="mt-8 flex-row items-center justify-between rounded-2xl bg-white/15 px-2.5 py-2">
             <View className="items-center flex-1">
               <Text className="text-[9px] font-bold uppercase tracking-wider text-white/65">HT</Text>
               <Text className="text-[11px] font-black text-white">

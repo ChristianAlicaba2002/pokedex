@@ -8,7 +8,7 @@ export const useGetPokemon = () => {
   });
 };
 
-export const useGetPokemonById = (id?: string) => {
+export const useGetPokemonById = (id: number) => {
   return useQuery({
     queryKey: ["pokemon", "id", id],
     queryFn: () => getPokemonById(id!),

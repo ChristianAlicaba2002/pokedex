@@ -1,40 +1,32 @@
-import { TPokemonData } from '@/@types/type';
-import { getPokemon } from '@/services/api/pokemon-api';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useGetPokemon } from '@/hooks/pokemon-hook';
+import { useMemo, useState } from 'react';
 
 export function usePokemonList() {
-  const [pokemons, setPokemons] = useState<TPokemonData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState('');
   const [headerHeight, setHeaderHeight] = useState(0);
 
-  const fetchData = useCallback(async () => {
-    if (loading || !hasMore) return;
-    setLoading(true);
-    const data = await getPokemon(page * 30);
-    if (data.length === 0) {
-      setHasMore(false);
-    } else {
-      setPokemons((prev) => [...prev, ...data]);
-      setPage((prev) => prev + 1);
-    }
-    setLoading(false);
-  }, [loading, hasMore, page]);
+  const {
+    data,
+    isPending,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+    isRefetching,
+  } = useGetPokemon();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const pokemons = useMemo(
+    () => data?.pages.flat() ?? [],
+    [data]
+  );
+
+  function fetchData() {
+    if (!hasNextPage || isFetchingNextPage) return;
+    fetchNextPage();
+  }
 
   async function handleRefresh() {
-    setRefreshing(true);
-    const data = await getPokemon(0);
-    setPokemons(data);
-    setPage(1);
-    setHasMore(true);
-    setRefreshing(false);
+    await refetch();
   }
 
   const filteredPokemons = useMemo(() => {
@@ -53,7 +45,9 @@ export function usePokemonList() {
     [filteredPokemons, featured]
   );
 
-  const isInitialLoading = loading && pokemons.length === 0;
+  const isInitialLoading = isPending && pokemons.length === 0;
+  const loading = isFetchingNextPage;
+  const refreshing = isRefetching && !isFetchingNextPage;
 
   return {
     pokemons,

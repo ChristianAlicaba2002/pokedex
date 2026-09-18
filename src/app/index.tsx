@@ -1,74 +1,37 @@
-import { TPokemonData } from '@/@types/type';
 import { FeaturedPokemonCard, PokemonCard } from '@/components/pokemon-card';
 import { FeaturedSkeleton, SkeletonCard } from '@/components/skeleton-card';
 import { StickyHeader } from '@/components/sticky-header';
 import { BottomTabInset } from '@/constants/theme';
-import { getPokemon } from '@/services/api/pokemon-api';
+import { usePokemonList } from '@/hooks/use-pokemon-list';
 import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const [pokemons, setPokemons] = useState<TPokemonData[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [search, setSearch] = useState('');
-  const [headerHeight, setHeaderHeight] = useState(0);
-
-  const fetchData = useCallback(async () => {
-    if (loading || !hasMore) return;
-    setLoading(true);
-    const data = await getPokemon(page * 30);
-    if (data.length === 0) {
-      setHasMore(false);
-    } else {
-      setPokemons((prev) => [...prev, ...data]);
-      setPage((prev) => prev + 1);
-    }
-    setLoading(false);
-  }, [loading, hasMore, page]);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  async function handleRefresh() {
-    setRefreshing(true);
-    const data = await getPokemon(0);
-    setPokemons(data);
-    setPage(1);
-    setHasMore(true);
-    setRefreshing(false);
-  }
-
-  const filteredPokemons = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return pokemons;
-    return pokemons.filter((p) => p.name.toLowerCase().includes(query));
-  }, [pokemons, search]);
-
-  const featured = useMemo(
-    () => pokemons.find((p) => p.id === 25 || p.name.toLowerCase() === 'pikachu'),
-    [pokemons]
-  );
-  const gridPokemons = useMemo(
-    () => filteredPokemons.filter((p) => p.id !== featured?.id),
-    [filteredPokemons, featured]
-  );
+  const {
+    pokemons,
+    loading,
+    refreshing,
+    search,
+    setSearch,
+    headerHeight,
+    setHeaderHeight,
+    fetchData,
+    handleRefresh,
+    filteredPokemons,
+    featured,
+    gridPokemons,
+    isInitialLoading,
+  } = usePokemonList();
 
   const listContentStyle = {
     paddingHorizontal: 12,
     paddingTop: headerHeight + 12,
     paddingBottom: BottomTabInset + 16,
   };
-
-  const isInitialLoading = loading && pokemons.length === 0;
 
   return (
     <LinearGradient 

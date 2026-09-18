@@ -1,10 +1,15 @@
 import { getPokemon, getPokemonById } from "@/services/api/pokemon-api";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+
+const PAGE_SIZE = 30;
 
 export const useGetPokemon = () => {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ["pokemon"],
-    queryFn: () => getPokemon(),
+    queryFn: ({ pageParam }) => getPokemon(pageParam),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _allPages, lastPageParam) =>
+      lastPage.length < PAGE_SIZE ? undefined : lastPageParam + PAGE_SIZE,
   });
 };
 

@@ -25,7 +25,7 @@ A cross-platform Pokédex app built with [Expo](https://expo.dev) and [React Nat
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) (LTS recommended)
-- npm
+- pnpm
 - For mobile development: [Expo Go](https://expo.dev/go) on a physical device, or Android Studio / Xcode for emulators
 
 ## Getting Started
@@ -47,7 +47,7 @@ cd pokedex
 ### 2. Install dependencies
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### 3. Configure environment variables
@@ -62,6 +62,10 @@ EXPO_PUBLIC_API_BASE_URL=
 
 ```bash
 npx expo start
+```
+
+```bash
+pnpm start -c
 ```
 
 From the Expo CLI menu you can:

@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 
 import AppTabs from '@/components/app-tabs';
 import { PokemonSplashOverlay } from '@/components/pokemon-splash';
+import { ThemePreferenceProvider } from '@/providers/theme-preference';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 const queryClient = new QueryClient();
@@ -11,14 +12,22 @@ const queryClient = new QueryClient();
 SplashScreen.preventAutoHideAsync();
 SplashScreen.setOptions({ duration: 400, fade: true });
 
-export default function TabLayout() {
+function ThemedApp() {
   const colorScheme = useColorScheme();
   return (
-    <QueryClientProvider client={queryClient}>
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <PokemonSplashOverlay />
       <AppTabs />
     </ThemeProvider>
+  );
+}
+
+export default function TabLayout() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemePreferenceProvider>
+        <ThemedApp />
+      </ThemePreferenceProvider>
     </QueryClientProvider>
   );
 }

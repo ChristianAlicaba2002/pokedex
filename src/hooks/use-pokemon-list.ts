@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 
 export function usePokemonList() {
   const [search, setSearch] = useState('');
+  const [selectedType, setSelectedType] = useState<string | null>(null);
   const [headerHeight, setHeaderHeight] = useState(0);
 
   const {
@@ -30,15 +31,23 @@ export function usePokemonList() {
   }
 
   const filteredPokemons = useMemo(() => {
+    let list = pokemons;
+    if (selectedType) {
+      list = list.filter((p) =>
+        p.types?.some((t: { type: { name: string } }) => t.type.name.toLowerCase() === selectedType)
+      );
+    }
     const query = search.trim().toLowerCase();
-    if (!query) return pokemons;
-    return pokemons.filter((p) => p.name.toLowerCase().includes(query));
-  }, [pokemons, search]);
+    if (query) {
+      list = list.filter((p) => p.name.toLowerCase().includes(query));
+    }
+    return list;
+  }, [pokemons, search, selectedType]);
 
-  const featured = useMemo(
-    () => pokemons.find((p) => p.id === 25 || p.name.toLowerCase() === 'pikachu'),
-    [pokemons]
-  );
+  const featured = useMemo(() => {
+    if (search.trim() || selectedType) return undefined;
+    return pokemons.find((p) => p.id === 25 || p.name.toLowerCase() === 'pikachu');
+  }, [pokemons, search, selectedType]);
 
   const gridPokemons = useMemo(
     () => filteredPokemons.filter((p) => p.id !== featured?.id),
@@ -55,6 +64,8 @@ export function usePokemonList() {
     refreshing,
     search,
     setSearch,
+    selectedType,
+    setSelectedType,
     headerHeight,
     setHeaderHeight,
     fetchData,

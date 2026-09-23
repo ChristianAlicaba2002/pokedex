@@ -14,6 +14,8 @@ type StickyHeaderProps = {
   setSearch: (search: string) => void;
   loadedCount?: number;
   colors: ScreenTheme;
+  selectedType?: string | null;
+  onSelectType?: (type: string | null) => void;
 };
 
 export const StickyHeader = ({
@@ -23,6 +25,8 @@ export const StickyHeader = ({
   setSearch,
   loadedCount = 0,
   colors,
+  selectedType = null,
+  onSelectType,
 }: StickyHeaderProps) => (
   <View
     className="absolute left-0 right-0 top-0 z-10"
@@ -74,7 +78,13 @@ export const StickyHeader = ({
         ) : null}
       </View>
 
-      <SearchBar value={search} onChangeText={setSearch} colors={colors} />
+      <SearchBar
+        value={search}
+        onChangeText={setSearch}
+        colors={colors}
+        selectedType={selectedType}
+        onSelectType={onSelectType}
+      />
     </LinearGradient>
   </View>
 );

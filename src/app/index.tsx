@@ -21,6 +21,8 @@ export default function HomeScreen() {
     refreshing,
     search,
     setSearch,
+    selectedType,
+    setSelectedType,
     headerHeight,
     setHeaderHeight,
     fetchData,
@@ -62,6 +64,8 @@ export default function HomeScreen() {
         setSearch={setSearch}
         loadedCount={pokemons.length}
         colors={colors}
+        selectedType={selectedType}
+        onSelectType={setSelectedType}
       />
 
       {isInitialLoading ? (
@@ -83,7 +87,7 @@ export default function HomeScreen() {
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between' }}
           contentContainerStyle={listContentStyle}
-          onEndReached={search ? undefined : fetchData}
+          onEndReached={search || selectedType ? undefined : fetchData}
           onEndReachedThreshold={0.5}
           refreshControl={
             <RefreshControl
@@ -95,21 +99,23 @@ export default function HomeScreen() {
           }
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            featured ? (
-              <View>
-                <FeaturedPokemonCard item={featured} />
-                <View className="mb-1 mt-1 flex-row items-end justify-between px-1.5">
-                  <Text className="text-lg font-black" style={{ color: colors.text }}>
-                    {search ? 'Matches' : 'Living Dex'}
-                  </Text>
-                  <Text
-                    className="text-xs font-semibold uppercase tracking-wider"
-                    style={{ color: colors.muted }}>
-                    {filteredPokemons.length} Pokémon
-                  </Text>
-                </View>
+            <View>
+              {featured ? <FeaturedPokemonCard item={featured} /> : null}
+              <View className="mb-1 mt-1 flex-row items-end justify-between px-1.5">
+                <Text className="text-lg font-black capitalize" style={{ color: colors.text }}>
+                  {search
+                    ? 'Matches'
+                    : selectedType
+                      ? `${selectedType} types`
+                      : 'Living Dex'}
+                </Text>
+                <Text
+                  className="text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: colors.muted }}>
+                  {filteredPokemons.length} Pokémon
+                </Text>
               </View>
-            ) : null
+            </View>
           }
           ListEmptyComponent={
             <View className="items-center px-6 py-16">
@@ -122,16 +128,22 @@ export default function HomeScreen() {
                   tintColor={colors.accent}
                 />
               </View>
-              <Text className="mt-4 text-lg font-black" style={{ color: colors.text }}>
-                No “{search}” in this dex
+              <Text className="mt-4 text-lg font-black capitalize" style={{ color: colors.text }}>
+                {search
+                  ? `No “${search}” in this dex`
+                  : selectedType
+                    ? `No ${selectedType} Pokémon loaded`
+                    : 'No Pokémon in this dex'}
               </Text>
               <Text className="mt-1 text-center text-md" style={{ color: colors.muted }}>
-                Try another name, or clear search to keep browsing.
+                {selectedType
+                  ? 'Try another type, or tap All types to keep browsing.'
+                  : 'Try another name, or clear search to keep browsing.'}
               </Text>
             </View>
           }
           ListFooterComponent={
-            loading && !search ? (
+            loading && !search && !selectedType ? (
               <View className="py-6">
                 <ActivityIndicator size="large" color={colors.text} />
               </View>

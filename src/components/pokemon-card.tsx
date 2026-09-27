@@ -1,6 +1,6 @@
 import { TPokemonData } from '@/@types/type';
 import { PokeBallMark } from '@/components/poke-ball-mark';
-import { getPokemonArtwork, getTypePalette } from '@/utils/type-colors';
+import { createPokemonCardData } from '@/utils/pokemon-card-data';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SymbolView } from 'expo-symbols';
@@ -24,13 +24,11 @@ function TypeChip({ name, compact = false }: { name: string; compact?: boolean }
 }
 
 export function PokemonCard({ item }: { item: TPokemonData }) {
-  const mainType = item?.types?.[0]?.type?.name ?? 'normal';
-  const palette = getTypePalette(mainType);
-  const artwork = getPokemonArtwork(item.id);
-  const hp = item.stats?.find((s) => s.stat.name === 'hp')?.base_stat;
+  const card = createPokemonCardData(item);
 
   return (
     <Pressable
+      onPress={card.openDetails}
       className="mb-4 flex-1 mx-1.5"
       style={({ pressed }) => ({
         transform: [{ scale: pressed ? 0.97 : 1 }],
@@ -38,7 +36,7 @@ export function PokemonCard({ item }: { item: TPokemonData }) {
       })}>
       <View className="mt-8">
         <LinearGradient
-          colors={[palette.bg, palette.dark]}
+          colors={[card.palette.bg, card.palette.dark]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           className="min-h-[184px] overflow-hidden rounded-[28px] px-3.5 pt-20">
@@ -57,44 +55,40 @@ export function PokemonCard({ item }: { item: TPokemonData }) {
           </Pressable>
 
           <Text className="absolute -top-1 right-3 text-[42px] font-black italic tracking-tighter text-white/20">
-            #{String(item.id).padStart(3, '0')}
+            {card.dexNumber}
           </Text>
 
           <Text className="top-6 text-base font-black capitalize text-white" numberOfLines={1}>
-            {item.name}
+            {card.name}
           </Text>
 
           <View className="top-6 flex-row flex-wrap gap-1">
-            {item.types?.map((t) => (
-              <TypeChip key={t.type.name} name={t.type.name} compact />
+            {card.types.map((type) => (
+              <TypeChip key={type} name={type} compact />
             ))}
           </View>
 
           <View className="mt-8 flex-row items-center justify-between rounded-2xl bg-white/15 px-2.5 py-2">
             <View className="items-center flex-1">
               <Text className="text-[9px] font-bold uppercase tracking-wider text-white/65">HT</Text>
-              <Text className="text-[11px] font-black text-white">
-                {item.height != null ? `${(item.height / 10).toFixed(1)} m` : '—'}
-              </Text>
+              <Text className="text-[11px] font-black text-white">{card.height}</Text>
             </View>
             <View className="h-6 w-px bg-white/25" />
             <View className="items-center flex-1">
               <Text className="text-[9px] font-bold uppercase tracking-wider text-white/65">WT</Text>
-              <Text className="text-[11px] font-black text-white">
-                {item.weight != null ? `${(item.weight / 10).toFixed(1)} kg` : '—'}
-              </Text>
+              <Text className="text-[11px] font-black text-white">{card.weight}</Text>
             </View>
             <View className="h-6 w-px bg-white/25" />
             <View className="items-center flex-1">
               <Text className="text-[9px] font-bold uppercase tracking-wider text-white/65">HP</Text>
-              <Text className="text-[11px] font-black text-white">{hp ?? '—'}</Text>
+              <Text className="text-[11px] font-black text-white">{card.hp}</Text>
             </View>
           </View>
         </LinearGradient>
 
         <View className="absolute -top-9 left-0 right-0 items-center" pointerEvents="none">
           <Image
-            source={[{ uri: artwork }, FALLBACK_ART]}
+            source={[{ uri: card.artwork }, FALLBACK_ART]}
             contentFit="contain"
             transition={200}
             style={{ width: 124, height: 124 }}
@@ -106,18 +100,17 @@ export function PokemonCard({ item }: { item: TPokemonData }) {
 }
 
 export function FeaturedPokemonCard({ item }: { item: TPokemonData }) {
-  const mainType = item?.types?.[0]?.type?.name ?? 'normal';
-  const palette = getTypePalette(mainType);
-  const artwork = getPokemonArtwork(item.id);
+  const card = createPokemonCardData(item);
 
   return (
     <Pressable
+      onPress={card.openDetails}
       className="mb-5 mx-1.5"
       style={({ pressed }) => ({
         transform: [{ scale: pressed ? 0.985 : 1 }],
       })}>
       <LinearGradient
-        colors={[palette.dark, palette.bg]}
+        colors={[card.palette.dark, card.palette.bg]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         className="min-h-[176px] overflow-hidden rounded-[32px] px-5 py-6">
@@ -132,21 +125,21 @@ export function FeaturedPokemonCard({ item }: { item: TPokemonData }) {
             </View>
 
             <Text className="text-xs font-bold uppercase tracking-widest text-white/70">
-              #{String(item.id).padStart(3, '0')}
+              {card.dexNumber}
             </Text>
             <Text className="mt-0.5 text-3xl font-black capitalize text-white" numberOfLines={1}>
-              {item.name}
+              {card.name}
             </Text>
 
             <View className="mt-3 flex-row flex-wrap gap-1.5">
-              {item.types?.map((t) => (
-                <TypeChip key={t.type.name} name={t.type.name} />
+              {card.types.map((type) => (
+                <TypeChip key={type} name={type} />
               ))}
             </View>
           </View>
 
           <Image
-            source={[{ uri: artwork }, FALLBACK_ART]}
+            source={[{ uri: card.artwork }, FALLBACK_ART]}
             contentFit="contain"
             transition={240}
             style={{ width: 144, height: 144 }}

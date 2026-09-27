@@ -23,6 +23,14 @@ export function getTypePalette(type: string) {
   return TYPE_COLORS[type.toLowerCase()] ?? TYPE_COLORS.water;
 }
 
-export function getPokemonArtwork(id: number) {
-  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+export function getPokemonHomeArtwork(id: number, shiny = false) {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${shiny ? 'shiny/' : ''}${id}.png`;
+}
+
+export function getPokemonModel(id: number, shiny = false) {
+  return `https://raw.githubusercontent.com/Pokemon-3D-api/assets/refs/heads/main/models/opt/${shiny ? 'shiny' : 'regular'}/${id}.glb`;
+}
+
+export function getPokemonArtwork(id: number, shiny = false) {
+  return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${shiny ? 'shiny/' : ''}${id}.png`;
 }

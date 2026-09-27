@@ -1,49 +1,32 @@
+export type TNamedResource = {
+    name: string,
+    url: string
+}
+
 export type TPokemonData = {
-    results: [
-        {
-            name: string,
-            url: string
-        }
-    ],
+    results: TNamedResource[],
     id: number,
     name: string,
     height: number,
     weight: number,
     base_experience: number,
 
-    types: [
-        {
-            slot: number,
-            type: {
-                name: string,
-                url: string,
-            }
-        }
-    ],
+    types: {
+        slot: number,
+        type: TNamedResource
+    }[],
 
-    abilities: [
-        {
-            ability: [
-                {
-                    name: string,
-                    url: string
-                },
-                is_hidden: boolean,
-                slot: number
-            ]
-        }
-    ],
+    abilities: {
+        ability: TNamedResource,
+        is_hidden: boolean,
+        slot: number
+    }[],
 
-    stats: [
-        {
-            base_stat: number,
-            effort: number,
-            stat: {
-                name: string,
-                url: string
-            }
-        }
-    ],
+    stats: {
+        base_stat: number,
+        effort: number,
+        stat: TNamedResource
+    }[],
     
     sprites: {
         front_default: string,
@@ -64,4 +47,43 @@ export type TPokemon = {
             name: string
         }
     }>
+}
+
+export type TPokedex = {
+    id: number,
+    name: string,
+    pokemon_entries: {
+        entry_number: number,
+        pokemon_species: TNamedResource
+    }[]
+}
+
+export type TPokemonSpecies = {
+    id: number,
+    name: string,
+    is_legendary: boolean,
+    is_mythical: boolean,
+    capture_rate: number,
+    habitat: TNamedResource | null,
+    generation: TNamedResource,
+    evolution_chain: { url: string },
+    genera: {
+        genus: string,
+        language: TNamedResource
+    }[],
+    flavor_text_entries: {
+        flavor_text: string,
+        language: TNamedResource,
+        version: TNamedResource
+    }[]
+}
+
+export type TEvolutionNode = {
+    species: TNamedResource,
+    evolves_to: TEvolutionNode[]
+}
+
+export type TEvolutionChain = {
+    id: number,
+    chain: TEvolutionNode
 }

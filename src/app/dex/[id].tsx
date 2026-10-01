@@ -1,7 +1,10 @@
 import { PokeBallMark } from '@/components/poke-ball-mark';
+import { PokemonAbilities } from '@/components/pokemon-abilities';
 import { PokemonModelViewer } from '@/components/pokemon-model-viewer';
+import { PokemonMoves } from '@/components/pokemon-moves';
 import { ScreenThemes, type ScreenTheme } from '@/constants/screen-theme';
 import {
+  useGetAllPokemonSpecies,
   useGetEvolutionChain,
   useGetPokemonById,
   useGetPokemonSpecies,
@@ -12,11 +15,17 @@ import {
   formatDexNumber,
   formatName,
   getEnglishFlavorText,
+  getIdFromUrl,
   getEnglishGenus,
   getEvolutionStages,
   getPokemonSprite,
 } from '@/utils/pokeapi';
 import { getTypePalette } from '@/utils/type-colors';
+import {
+  formatMultiplier,
+  getDefensiveMatchups,
+  type TypeMatchup,
+} from '@/utils/type-effectiveness';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -99,6 +108,110 @@ function Section({
   );
 }
 
+function MatchupGroup({
+  label,
+  matchups,
+  colors,
+}: {
+  label: string;
+  matchups: TypeMatchup[];
+  colors: ScreenTheme;
+}) {
+  if (matchups.length === 0) return null;
+  return (
+    <View className="mt-4">
+      <Text
+        className="text-[11px] font-bold uppercase tracking-wider"
+        style={{ color: colors.muted }}>
+        {label}
+      </Text>
+      <View className="mt-2 flex-row flex-wrap gap-2">
+        {matchups.map((m) => (
+          <View
+            key={m.type}
+            className="flex-row items-center overflow-hidden rounded-full"
+            style={{ backgroundColor: getTypePalette(m.type).bg }}>
+            <Text className="py-1 pl-3 pr-2 text-xs font-bold uppercase text-white">{m.type}</Text>
+            <View className="bg-black/20 px-2 py-1">
+              <Text className="text-xs font-black text-white">{formatMultiplier(m.multiplier)}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// Fallback until the species list loads (National Dex size as of Gen IX).
+const LAST_DEX_NUMBER = 1025;
+
+function DexNavigator({ id, colors }: { id: number; colors: ScreenTheme }) {
+  const { data } = useGetAllPokemonSpecies();
+  const lastId = data?.length ?? LAST_DEX_NUMBER;
+
+  const nameFor = (target: number) => {
+    const entry = data?.[target - 1];
+    const match =
+      entry && getIdFromUrl(entry.url) === target
+        ? entry
+        : data?.find((s) => getIdFromUrl(s.url) === target);
+    return match ? formatName(match.name) : '';
+  };
+
+  const neighbors = [
+    { target: id - 1, show: id > 1, align: 'left' as const },
+    { target: id + 1, show: id < lastId, align: 'right' as const },
+  ];
+
+  return (
+    <View className="flex-row gap-3">
+      {neighbors.map(({ target, show, align }) =>
+        show ? (
+          <Pressable
+            key={align}
+            accessibilityLabel={`${align === 'left' ? 'Previous' : 'Next'} Pokémon, ${formatDexNumber(target)}`}
+            onPress={() => router.replace(`/dex/${target}`)}
+            className={`flex-1 flex-row items-center rounded-2xl px-3 py-2.5 ${align === 'right' ? 'justify-end' : ''}`}
+            style={({ pressed }) => ({
+              backgroundColor: colors.card,
+              borderWidth: 1,
+              borderColor: colors.cardBorder,
+              opacity: pressed ? 0.7 : 1,
+            })}>
+            {align === 'left' ? (
+              <SymbolView
+                name={{ ios: 'chevron.left', android: 'chevron_left', web: 'chevron_left' }}
+                size={16}
+                tintColor={colors.muted}
+              />
+            ) : null}
+            <View className={`mx-1.5 flex-shrink ${align === 'right' ? 'items-end' : ''}`}>
+              <Text className="text-[10px] font-bold uppercase tracking-wider" style={{ color: colors.muted }}>
+                {formatDexNumber(target)}
+              </Text>
+              <Text
+                className="text-sm font-black capitalize"
+                style={{ color: colors.text }}
+                numberOfLines={1}>
+                {nameFor(target) || (align === 'left' ? 'Previous' : 'Next')}
+              </Text>
+            </View>
+            {align === 'right' ? (
+              <SymbolView
+                name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }}
+                size={16}
+                tintColor={colors.muted}
+              />
+            ) : null}
+          </Pressable>
+        ) : (
+          <View key={align} className="flex-1" />
+        )
+      )}
+    </View>
+  );
+}
+
 function SkeletonLine({ colors, width }: { colors: ScreenTheme; width: `${number}%` }) {
   return (
     <View className="mt-2 h-3.5 rounded-md" style={{ width, backgroundColor: colors.skeleton }} />
@@ -126,6 +239,9 @@ export default function PokemonDetailScreen() {
   const flavor = species.data ? getEnglishFlavorText(species.data) : undefined;
   const stages = evolution.data ? getEvolutionStages(evolution.data.chain) : [];
   const totalStats = pokemon.data?.stats.reduce((sum, s) => sum + s.base_stat, 0) ?? 0;
+  const matchups = pokemon.data
+    ? getDefensiveMatchups(pokemon.data.types.map((t) => t.type.name))
+    : undefined;
 
   if (pokemon.isError) {
     return (
@@ -250,6 +366,8 @@ export default function PokemonDetailScreen() {
         </LinearGradient>
 
         <View className="gap-4 px-5 pt-5">
+          <DexNavigator id={pokemonId} colors={colors} />
+
           <Section title="Pokédex Entry" colors={colors}>
             {flavor ? (
               <>
@@ -305,25 +423,27 @@ export default function PokemonDetailScreen() {
                   style={{ color: colors.muted }}>
                   Abilities
                 </Text>
-                <View className="mt-2 flex-row flex-wrap gap-2">
-                  {pokemon.data.abilities.map((a) => (
-                    <View
-                      key={a.ability.name}
-                      className="flex-row items-center rounded-full px-3 py-1.5"
-                      style={{
-                        backgroundColor: a.is_hidden ? 'transparent' : palette.bg,
-                        borderWidth: 1,
-                        borderColor: palette.bg,
-                      }}>
-                      <Text
-                        className="text-xs font-bold capitalize"
-                        style={{ color: a.is_hidden ? colors.text : '#FFFFFF' }}>
-                        {formatName(a.ability.name)}
-                        {a.is_hidden ? ' · hidden' : ''}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
+                <PokemonAbilities
+                  key={pokemonId}
+                  abilities={pokemon.data.abilities}
+                  palette={palette}
+                  colors={colors}
+                />
+              </>
+            ) : (
+              <ActivityIndicator style={{ marginTop: 16 }} color={colors.text} />
+            )}
+          </Section>
+
+          <Section title="Type Matchups" colors={colors}>
+            {matchups ? (
+              <>
+                <Text className="mt-1 text-xs" style={{ color: colors.muted }}>
+                  Damage this Pokémon takes from each attacking type.
+                </Text>
+                <MatchupGroup label="Weak to" matchups={matchups.weak} colors={colors} />
+                <MatchupGroup label="Resistant to" matchups={matchups.resistant} colors={colors} />
+                <MatchupGroup label="Immune to" matchups={matchups.immune} colors={colors} />
               </>
             ) : (
               <ActivityIndicator style={{ marginTop: 16 }} color={colors.text} />
@@ -425,6 +545,19 @@ export default function PokemonDetailScreen() {
                   </View>
                 ))}
               </View>
+            )}
+          </Section>
+
+          <Section title="Moves" colors={colors}>
+            {pokemon.data ? (
+              <PokemonMoves
+                key={pokemonId}
+                moves={pokemon.data.moves}
+                palette={palette}
+                colors={colors}
+              />
+            ) : (
+              <ActivityIndicator style={{ marginTop: 16 }} color={colors.text} />
             )}
           </Section>
         </View>

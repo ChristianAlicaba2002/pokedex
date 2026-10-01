@@ -1,7 +1,9 @@
 import { ScreenTheme } from '@/constants/screen-theme';
 import { useGetPokemonById } from '@/hooks/pokemon-hook';
+import { useFavorites } from '@/providers/favorites';
 import { formatDexNumber, formatName, getPokemonSprite } from '@/utils/pokeapi';
 import { getTypePalette } from '@/utils/type-colors';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
@@ -20,6 +22,7 @@ type PokedexRowProps = {
 
 export function PokedexRow({ entryNumber, id, name, colors }: PokedexRowProps) {
   const { data } = useGetPokemonById(id);
+  const { isFavorite } = useFavorites();
   const mainType = data?.types[0]?.type.name;
   const accent = mainType ? getTypePalette(mainType).bg : colors.cardBorder;
 
@@ -74,6 +77,15 @@ export function PokedexRow({ entryNumber, id, name, colors }: PokedexRowProps) {
           ) : (
             <View className="h-5 w-16 rounded-full" style={{ backgroundColor: colors.skeleton }} />
           )}
+          {isFavorite(id) ? (
+        <MaterialCommunityIcons
+          name="heart"
+          size={15}
+          color="#ff0000"
+          accessibilityLabel="In your favorites"
+          style={{ marginRight: 6 }}
+        />
+      ) : null}
         </View>
       </View>
 

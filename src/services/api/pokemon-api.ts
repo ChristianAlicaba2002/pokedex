@@ -1,4 +1,4 @@
-import { TEvolutionChain, TPokedex, TPokemonData, TPokemonSpecies } from "@/@types/type";
+import { TAbility, TEvolutionChain, TMove, TNamedResource, TPokedex, TPokemonData, TPokemonSpecies } from "@/@types/type";
 import { api } from "./axios";
 
 export const getPokemon = async (offset = 0) => {
@@ -35,5 +35,25 @@ export const getPokemonSpecies = async (id: number): Promise<TPokemonSpecies> =>
 
 export const getEvolutionChain = async (url: string): Promise<TEvolutionChain> => {
   const res = await api.get<TEvolutionChain>(url);
+  return res.data;
+};
+
+export const getAllPokemonSpecies = async (): Promise<TNamedResource[]> => {
+  const res = await api.get<{ results: TNamedResource[] }>(`/pokemon-species?limit=2000`);
+  return res.data.results;
+};
+
+export const getPokemonByType = async (type: string): Promise<TNamedResource[]> => {
+  const res = await api.get<{ pokemon: { pokemon: TNamedResource }[] }>(`/type/${type}`);
+  return res.data.pokemon.map((p) => p.pokemon);
+};
+
+export const getAbility = async (name: string): Promise<TAbility> => {
+  const res = await api.get<TAbility>(`/ability/${name}`);
+  return res.data;
+};
+
+export const getMove = async (name: string): Promise<TMove> => {
+  const res = await api.get<TMove>(`/move/${name}`);
   return res.data;
 };

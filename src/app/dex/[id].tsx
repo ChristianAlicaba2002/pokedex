@@ -6,6 +6,7 @@ import {
   useGetPokemonById,
   useGetPokemonSpecies,
 } from '@/hooks/pokemon-hook';
+import { useFavorites } from '@/providers/favorites';
 import { useThemePreference } from '@/providers/theme-preference';
 import {
   formatDexNumber,
@@ -51,11 +52,15 @@ function CircleButton({
   icon,
   label,
   active = false,
+  activeTint = '#111827',
+  tint = '#FFFFFF',
   onPress,
 }: {
   icon: SymbolViewProps['name'];
   label: string;
   active?: boolean;
+  activeTint?: string;
+  tint?: string;
   onPress: () => void;
 }) {
   return (
@@ -68,7 +73,7 @@ function CircleButton({
         backgroundColor: active ? '#FFFFFF' : 'rgba(255,255,255,0.22)',
         opacity: pressed ? 0.7 : 1,
       })}>
-      <SymbolView name={icon} size={20} tintColor={active ? '#111827' : '#FFFFFF'} />
+      <SymbolView name={icon} size={20} tintColor={active ? activeTint : tint} />
     </Pressable>
   );
 }
@@ -107,6 +112,8 @@ export default function PokemonDetailScreen() {
   const { resolved } = useThemePreference();
   const colors = ScreenThemes[resolved];
   const [shiny, setShiny] = useState(false);
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorite = isFavorite(pokemonId);
 
   const pokemon = useGetPokemonById(pokemonId);
   const species = useGetPokemonSpecies(pokemonId);
@@ -174,12 +181,26 @@ export default function PokemonDetailScreen() {
               label="Go back"
               onPress={goBack}
             />
-            <CircleButton
-              icon={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
-              label={shiny ? 'Show normal colors' : 'Show shiny colors'}
-              active={shiny}
-              onPress={() => setShiny((value) => !value)}
-            />
+            <View className="flex-row gap-2">
+              <CircleButton
+                icon={{
+                  ios: favorite ? 'heart.fill' : 'heart',
+                  android: 'favorite',
+                  web: 'favorite',
+                }}
+                label={favorite ? 'Remove from favorites' : 'Add to favorites'}
+                active={favorite}
+                activeTint="#ff0000"
+                tint="#ff0000"
+                onPress={() => pokemon.data && toggleFavorite(pokemon.data)}
+              />
+              <CircleButton
+                icon={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
+                label={shiny ? 'Show normal colors' : 'Show shiny colors'}
+                active={shiny}
+                onPress={() => setShiny((value) => !value)}
+              />
+            </View>
           </View>
 
           <Text className="mt-4 text-sm font-bold uppercase tracking-widest text-white/70">
@@ -203,6 +224,18 @@ export default function PokemonDetailScreen() {
               <View className="rounded-full bg-white px-3 py-1">
                 <Text className="text-xs font-black uppercase" style={{ color: palette.dark }}>
                   {species.data.is_mythical ? 'Mythical' : 'Legendary'}
+                </Text>
+              </View>
+            ) : null}
+            {favorite ? (
+              <View className="flex-row items-center gap-1 rounded-full bg-white px-3 py-1">
+                <SymbolView
+                  name={{ ios: 'heart.fill', android: 'favorite', web: 'favorite' }}
+                  size={12}
+                  tintColor="#ff0000"
+                />
+                <Text className="text-xs font-black uppercase" style={{ color: '#ff0000' }}>
+                  In your favorites
                 </Text>
               </View>
             ) : null}

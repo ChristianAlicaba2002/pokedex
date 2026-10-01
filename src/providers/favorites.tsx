@@ -8,6 +8,7 @@ type FavoritesContextValue = {
   favorites: TFavoritePokemon[];
   isFavorite: (id: number) => boolean;
   toggleFavorite: (pokemon: TFavoritePokemon) => void;
+  clearFavorites: () => void;
 };
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);
@@ -47,9 +48,11 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
     );
   }, []);
 
+  const clearFavorites = useCallback(() => setFavorites([]), []);
+
   const value = useMemo(
-    () => ({ favorites, isFavorite, toggleFavorite }),
-    [favorites, isFavorite, toggleFavorite]
+    () => ({ favorites, isFavorite, toggleFavorite, clearFavorites }),
+    [favorites, isFavorite, toggleFavorite, clearFavorites]
   );
 
   return <FavoritesContext.Provider value={value}>{children}</FavoritesContext.Provider>;

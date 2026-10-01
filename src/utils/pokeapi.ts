@@ -1,4 +1,4 @@
-import { TEvolutionNode, TPokemonSpecies } from '@/@types/type';
+import { TEffectEntry, TEvolutionNode, TFlavorTextEntry, TPokemonSpecies } from '@/@types/type';
 
 export function getIdFromUrl(url: string) {
   return Number(url.split('/').filter(Boolean).pop());
@@ -43,4 +43,15 @@ export function getEvolutionStages(root: TEvolutionNode): EvolutionStage[] {
     current = current.flatMap((node) => node.evolves_to);
   }
   return stages;
+}
+
+// Short English description for an ability or move, falling back to the latest game text.
+export function getEnglishEffect(
+  entry: { effect_entries: TEffectEntry[]; flavor_text_entries: TFlavorTextEntry[] },
+  effectChance?: number | null
+) {
+  const effect = entry.effect_entries.find((e) => e.language.name === 'en')?.short_effect;
+  const flavor = entry.flavor_text_entries.filter((f) => f.language.name === 'en').pop()?.flavor_text;
+  const text = (effect ?? flavor)?.replace(/\s+/g, ' ').trim();
+  return text?.replace(/\$effect_chance/g, String(effectChance ?? ''));
 }

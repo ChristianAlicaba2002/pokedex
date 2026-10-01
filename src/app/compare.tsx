@@ -18,8 +18,22 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
 import { cssInterop } from 'nativewind';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
+import Animated, {
+  cancelAnimation,
+  Easing,
+  FadeIn,
+  FadeInDown,
+  FadeOut,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+  ZoomIn,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 cssInterop(LinearGradient, { className: 'style' });
@@ -373,18 +387,120 @@ function PlanRow({
   );
 }
 
-function WinnerCard({ a, b, colors }: { a: TPokemonData; b: TPokemonData; colors: ScreenTheme }) {
-  const prediction = predictBattle(a, b);
-  const winner = prediction.winner === 'a' ? a : prediction.winner === 'b' ? b : null;
-  const palette = winner ? paletteOf(winner) : { bg: '#64748B', dark: '#334155' };
+const BATTLE_MS = 1600;
 
-  const firstMover =
-    prediction.aMovesFirst == null ? null : prediction.aMovesFirst ? a : b;
+// Lunges toward the middle and back, like trading blows.
+function Fighter({ pokemon, side }: { pokemon: TPokemonData; side: 'left' | 'right' }) {
+  const x = useSharedValue(0);
+
+  useEffect(() => {
+    const direction = side === 'left' ? 1 : -1;
+    x.value = withDelay(
+      side === 'left' ? 0 : 220,
+      withRepeat(
+        withSequence(
+          withTiming(22 * direction, { duration: 160, easing: Easing.out(Easing.quad) }),
+          withTiming(0, { duration: 280, easing: Easing.inOut(Easing.quad) })
+        ),
+        -1
+      )
+    );
+    return () => cancelAnimation(x);
+  }, [side, x]);
+
+  const style = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
 
   return (
-    <View
-      className="overflow-hidden rounded-[28px]"
-      style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder }}>
+    <Animated.View style={style}>
+      <View className="items-center">
+        <Image
+          source={{ uri: getPokemonArtwork(pokemon.id) }}
+          contentFit="contain"
+          style={{ width: 84, height: 84 }}
+        />
+        <Text className="text-xs font-black text-white" numberOfLines={1}>
+          {displayName(pokemon)}
+        </Text>
+      </View>
+    </Animated.View>
+  );
+}
+
+function PulsingVs() {
+  const scale = useSharedValue(1);
+
+  useEffect(() => {
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.08, { duration: 600, easing: Easing.inOut(Easing.quad) }),
+        withTiming(1, { duration: 600, easing: Easing.inOut(Easing.quad) })
+      ),
+      -1
+    );
+    return () => cancelAnimation(scale);
+  }, [scale]);
+
+  const style = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  return (
+    <Animated.View style={style}>
+      <View className="h-12 w-12 items-center justify-center rounded-full bg-white">
+        <Text className="text-base font-black italic text-slate-800">VS</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
+function BattleScene({ a, b }: { a: TPokemonData; b: TPokemonData }) {
+  return (
+    <Animated.View exiting={FadeOut.duration(180)}>
+      <LinearGradient
+        colors={['#334155', '#0F172A']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        className="overflow-hidden px-4 py-4">
+        <PokeBallMark color="#FFFFFF" size={150} className="absolute -bottom-10 -right-8" />
+        <Text className="text-center text-[11px] font-bold uppercase tracking-[2px] text-white/80">
+          Battling…
+        </Text>
+        <View className="mt-2 flex-row items-center justify-between">
+          <View className="flex-1">
+            <Fighter pokemon={a} side="left" />
+          </View>
+          <PulsingVs />
+          <View className="flex-1">
+            <Fighter pokemon={b} side="right" />
+          </View>
+        </View>
+      </LinearGradient>
+    </Animated.View>
+  );
+}
+
+function WinnerReveal({
+  winner,
+  confidence,
+}: {
+  winner: TPokemonData | null;
+  confidence: string;
+}) {
+  const palette = winner ? paletteOf(winner) : { bg: '#64748B', dark: '#334155' };
+  const float = useSharedValue(0);
+
+  // Slow, endless bob for the winner.
+  useEffect(() => {
+    float.value = withRepeat(
+      withTiming(-6, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
+      -1,
+      true
+    );
+    return () => cancelAnimation(float);
+  }, [float]);
+
+  const floatStyle = useAnimatedStyle(() => ({ transform: [{ translateY: float.value }] }));
+
+  return (
+    <Animated.View entering={FadeIn.duration(250)}>
       <LinearGradient
         colors={[palette.bg, palette.dark]}
         start={{ x: 0, y: 0 }}
@@ -392,12 +508,12 @@ function WinnerCard({ a, b, colors }: { a: TPokemonData; b: TPokemonData; colors
         className="overflow-hidden px-4 py-4">
         <PokeBallMark color="#FFFFFF" size={150} className="absolute -bottom-10 -right-8" />
         <View className="flex-row items-center">
-          <View className="flex-1">
+          <Animated.View style={{ flex: 1 }} entering={ZoomIn.springify().damping(14)}>
             <View className="flex-row items-center gap-1.5">
               <SymbolView
                 name={{ ios: 'trophy.fill', android: 'emoji_events', web: 'emoji_events' }}
-                size={14}
-                tintColor="#FFFFFF"
+                size={16}
+                tintColor="#FDE047"
               />
               <Text className="text-[11px] font-bold uppercase tracking-[2px] text-white/90">
                 Predicted winner
@@ -407,33 +523,92 @@ function WinnerCard({ a, b, colors }: { a: TPokemonData; b: TPokemonData; colors
               {winner ? displayName(winner) : 'Too close to call'}
             </Text>
             <View className="mt-2 self-start rounded-full bg-white/25 px-2.5 py-1">
-              <Text className="text-[11px] font-black uppercase text-white">
-                {prediction.confidence}
-              </Text>
+              <Text className="text-[11px] font-black uppercase text-white">{confidence}</Text>
             </View>
-          </View>
+          </Animated.View>
           {winner ? (
-            <Image
-              source={{ uri: getPokemonArtwork(winner.id) }}
-              contentFit="contain"
-              transition={200}
-              style={{ width: 96, height: 96 }}
-            />
+            <Animated.View entering={ZoomIn.delay(150).springify().damping(14)}>
+              <Animated.View style={floatStyle}>
+                <Image
+                  source={{ uri: getPokemonArtwork(winner.id) }}
+                  contentFit="contain"
+                  style={{ width: 104, height: 104 }}
+                />
+              </Animated.View>
+            </Animated.View>
           ) : null}
         </View>
       </LinearGradient>
+    </Animated.View>
+  );
+}
 
-      <View className="gap-2 px-4 py-4">
-        <PlanRow pokemon={a} plan={prediction.planA} colors={colors} />
-        <PlanRow pokemon={b} plan={prediction.planB} colors={colors} />
-        <Text className="mt-1 text-xs font-semibold" style={{ color: colors.text }}>
-          {firstMover ? `${displayName(firstMover)} moves first.` : 'Speed tie — either could move first.'}
-        </Text>
-        <Text className="text-[11px] leading-4" style={{ color: colors.muted }}>
-          Estimate only: both at level 50, each using its best 80-power same-type move. Items,
-          abilities, natures, and real movesets can change the result.
-        </Text>
-      </View>
+function WinnerCard({ a, b, colors }: { a: TPokemonData; b: TPokemonData; colors: ScreenTheme }) {
+  const prediction = predictBattle(a, b);
+  const winner = prediction.winner === 'a' ? a : prediction.winner === 'b' ? b : null;
+  const [round, setRound] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+
+  useEffect(() => {
+    setRevealed(false);
+    const timeout = setTimeout(() => setRevealed(true), BATTLE_MS);
+    return () => clearTimeout(timeout);
+  }, [round]);
+
+  const firstMover =
+    prediction.aMovesFirst == null ? null : prediction.aMovesFirst ? a : b;
+
+  return (
+    <View
+      className="overflow-hidden rounded-[28px]"
+      style={{ backgroundColor: colors.card, borderWidth: 1, borderColor: colors.cardBorder }}>
+      {revealed ? (
+        <WinnerReveal winner={winner} confidence={prediction.confidence} />
+      ) : (
+        <BattleScene a={a} b={b} />
+      )}
+
+      {revealed ? (
+        <View className="gap-2 px-4 py-4">
+          <Animated.View entering={FadeInDown.delay(200).duration(300)}>
+            <PlanRow pokemon={a} plan={prediction.planA} colors={colors} />
+          </Animated.View>
+          <Animated.View entering={FadeInDown.delay(320).duration(300)}>
+            <PlanRow pokemon={b} plan={prediction.planB} colors={colors} />
+          </Animated.View>
+          <Animated.View entering={FadeIn.delay(450)}>
+            <View className="mt-1 flex-row items-center justify-between">
+              <Text className="flex-1 text-xs font-semibold" style={{ color: colors.text }}>
+                {firstMover
+                  ? `${displayName(firstMover)} moves first.`
+                  : 'Speed tie — either could move first.'}
+              </Text>
+              <Pressable
+                accessibilityLabel="Replay battle"
+                hitSlop={8}
+                onPress={() => setRound((r) => r + 1)}
+                className="ml-3 flex-row items-center gap-1 rounded-full px-3 py-1.5"
+                style={({ pressed }) => ({
+                  backgroundColor: colors.searchBg,
+                  opacity: pressed ? 0.7 : 1,
+                })}>
+                <SymbolView
+                  name={{ ios: 'arrow.counterclockwise', android: 'replay', web: 'replay' }}
+                  size={13}
+                  tintColor={colors.text}
+                />
+                <Text className="text-xs font-black" style={{ color: colors.text }}>
+                  Replay
+                </Text>
+              </Pressable>
+            </View>
+            <Text className="mt-2 text-[11px] leading-4" style={{ color: colors.muted }}>
+              Estimate only: both at level 50, each using its best 80-power same-type move. Items,
+              abilities, natures, and real movesets can change the result.
+            </Text>
+          </Animated.View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -587,7 +762,7 @@ export default function CompareScreen() {
 
         {a && b ? (
           <View className="mt-5 gap-4">
-            <WinnerCard a={a} b={b} colors={colors} />
+            <WinnerCard key={`${a.id}-${b.id}`} a={a} b={b} colors={colors} />
 
             <Section title="Summary" colors={colors}>
               <Verdict a={a} b={b} colors={colors} />

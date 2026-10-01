@@ -1,8 +1,12 @@
 import {
+  getAbility,
+  getAllPokemonSpecies,
   getEvolutionChain,
+  getMove,
   getPokedex,
   getPokemon,
   getPokemonById,
+  getPokemonByType,
   getPokemonSpecies,
 } from "@/services/api/pokemon-api";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
@@ -50,6 +54,41 @@ export const useGetEvolutionChain = (url?: string) => {
     queryKey: ["evolution-chain", url],
     queryFn: () => getEvolutionChain(url!),
     enabled: !!url,
+    staleTime: Infinity,
+  });
+};
+
+export const useGetAllPokemonSpecies = () => {
+  return useQuery({
+    queryKey: ["pokemon-species", "all"],
+    queryFn: getAllPokemonSpecies,
+    staleTime: Infinity,
+  });
+};
+
+export const useGetPokemonByType = (type: string | null) => {
+  return useQuery({
+    queryKey: ["type", type],
+    queryFn: () => getPokemonByType(type!),
+    enabled: !!type,
+    staleTime: Infinity,
+  });
+};
+
+export const useGetAbility = (name: string | null) => {
+  return useQuery({
+    queryKey: ["ability", name],
+    queryFn: () => getAbility(name!),
+    enabled: !!name,
+    staleTime: Infinity,
+  });
+};
+
+export const useGetMove = (name: string | null) => {
+  return useQuery({
+    queryKey: ["move", name],
+    queryFn: () => getMove(name!),
+    enabled: !!name,
     staleTime: Infinity,
   });
 };

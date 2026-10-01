@@ -81,16 +81,6 @@ export default function HomeScreen() {
       end={{ x: 1, y: 1 }}
       className="flex-1">
       <StatusBar style={colors.statusBar} />
-      <View
-        pointerEvents="none"
-        className="absolute -left-16 top-48 h-56 w-56 rounded-full"
-        style={{ backgroundColor: colors.orb }}
-      />
-      <View
-        pointerEvents="none"
-        className="absolute -right-10 top-96 h-48 w-48 rounded-full"
-        style={{ backgroundColor: colors.orbAlt }}
-      />
 
       <StickyHeader
         setHeaderHeight={setHeaderHeight}

@@ -1,9 +1,9 @@
-import { TPokemonData } from '@/@types/type';
+import { TFavoritePokemon } from '@/@types/type';
 import { formatDexNumber } from '@/utils/pokeapi';
 import { getPokemonArtwork, getTypePalette } from '@/utils/type-colors';
 import { router } from 'expo-router';
 
-export function createPokemonCardData(item: TPokemonData) {
+export function createPokemonCardData(item: TFavoritePokemon) {
   const mainType = item?.types?.[0]?.type?.name ?? 'normal';
 
   const formatMeasure = (value: number | undefined, unit: string) =>

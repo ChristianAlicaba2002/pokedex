@@ -4,6 +4,7 @@ import { useColorScheme } from 'react-native';
 
 import { PokemonSplashOverlay } from '@/components/pokemon-splash';
 import { FavoritesProvider } from '@/providers/favorites';
+import { RecentlyViewedProvider } from '@/providers/recently-viewed';
 import { ThemePreferenceProvider } from '@/providers/theme-preference';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -31,7 +32,9 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <ThemePreferenceProvider>
         <FavoritesProvider>
-          <ThemedApp />
+          <RecentlyViewedProvider>
+            <ThemedApp />
+          </RecentlyViewedProvider>
         </FavoritesProvider>
       </ThemePreferenceProvider>
     </QueryClientProvider>

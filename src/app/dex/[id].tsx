@@ -10,6 +10,7 @@ import {
   useGetPokemonSpecies,
 } from '@/hooks/pokemon-hook';
 import { useFavorites } from '@/providers/favorites';
+import { useRecentlyViewed } from '@/providers/recently-viewed';
 import { useThemePreference } from '@/providers/theme-preference';
 import {
   formatDexNumber,
@@ -32,7 +33,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
 import { cssInterop } from 'nativewind';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -229,6 +230,11 @@ export default function PokemonDetailScreen() {
   const favorite = isFavorite(pokemonId);
 
   const pokemon = useGetPokemonById(pokemonId);
+  const { addRecent } = useRecentlyViewed();
+
+  useEffect(() => {
+    if (pokemon.data) addRecent(pokemon.data);
+  }, [pokemon.data, addRecent]);
   const species = useGetPokemonSpecies(pokemonId);
   const evolution = useGetEvolutionChain(species.data?.evolution_chain.url);
 

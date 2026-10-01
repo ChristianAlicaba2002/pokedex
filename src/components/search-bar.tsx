@@ -50,7 +50,7 @@ export default function SearchBar({
         <TextInput
           className="ml-2.5 flex-1 text-base"
           style={{ color: colors.text }}
-          placeholder="Search by name..."
+          placeholder="Search by name or number..."
           placeholderTextColor={colors.searchPlaceholder}
           value={value}
           onChangeText={onChangeText}
@@ -59,12 +59,16 @@ export default function SearchBar({
           returnKeyType="search"
         />
         <Pressable
-          accessibilityLabel={selectedType ? `Sorted by ${selectedType}` : 'Sort by type'}
+          accessibilityLabel={selectedType ? `Filtered by ${selectedType}` : 'Filter by type'}
           hitSlop={8}
           onPress={() => setPickerOpen(true)}
           className="ml-2 h-8 w-8 items-center justify-center">
           <SymbolView
-            name={{ ios: 'arrow.up.arrow.down', android: 'sort', web: 'sort' }}
+            name={{
+              ios: 'line.3.horizontal.decrease.circle',
+              android: 'filter_list',
+              web: 'filter_list',
+            }}
             size={18}
             tintColor={selectedType ? colors.text : colors.muted}
           />
@@ -85,7 +89,7 @@ export default function SearchBar({
             onPress={(e) => e.stopPropagation()}>
             <View className="border-b px-5 py-4" style={{ borderBottomColor: rowBorder }}>
               <Text className="text-base font-bold" style={{ color: sheetText }}>
-                Sort by type
+                Filter by type
               </Text>
               <Text className="mt-0.5 text-xs" style={{ color: sheetMuted }}>
                 Choose one type, or show all

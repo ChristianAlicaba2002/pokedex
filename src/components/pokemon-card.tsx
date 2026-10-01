@@ -1,9 +1,10 @@
-import { TPokemonData } from '@/@types/type';
+import { TFavoritePokemon, TPokemonData } from '@/@types/type';
 import { PokeBallMark } from '@/components/poke-ball-mark';
+import { useFavorites } from '@/providers/favorites';
 import { createPokemonCardData } from '@/utils/pokemon-card-data';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { SymbolView } from 'expo-symbols';
 import { cssInterop } from 'nativewind';
 import { Pressable, Text, View } from 'react-native';
 
@@ -23,8 +24,10 @@ function TypeChip({ name, compact = false }: { name: string; compact?: boolean }
   );
 }
 
-export function PokemonCard({ item }: { item: TPokemonData }) {
+export function PokemonCard({ item }: { item: TFavoritePokemon }) {
   const card = createPokemonCardData(item);
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const favorite = isFavorite(item.id);
 
   return (
     <Pressable
@@ -43,14 +46,16 @@ export function PokemonCard({ item }: { item: TPokemonData }) {
           <PokeBallMark color="#FFFFFF" size={112} className="absolute -right-7 -top-8" />
 
           <Pressable
-            accessibilityLabel="Add to favorites"
+            accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'}
+            accessibilityState={{ selected: favorite }}
+            onPress={() => toggleFavorite(item)}
             hitSlop={8}
             className="absolute left-2.5 top-2.5 z-10 h-8 w-8 items-center justify-center rounded-full bg-white/20"
             style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}>
-            <SymbolView
-              name={{ ios: 'heart', android: 'favorite', web: 'favorite' }}
+            <MaterialCommunityIcons
+              name={favorite ? 'heart' : 'heart-outline'}
               size={16}
-              tintColor="#FFFFFF"
+              color="#ff0000"
             />
           </Pressable>
 

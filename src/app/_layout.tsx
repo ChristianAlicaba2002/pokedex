@@ -20,6 +20,7 @@ function ThemedApp() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="dex/[id]" />
+        <Stack.Screen name="compare" />
       </Stack>
     </ThemeProvider>
   );

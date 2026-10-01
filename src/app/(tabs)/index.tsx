@@ -1,8 +1,9 @@
 import { FeaturedPokemonCard, PokemonCard } from '@/components/pokemon-card';
 import { FeaturedSkeleton, SkeletonCard } from '@/components/skeleton-card';
 import { StickyHeader } from '@/components/sticky-header';
-import { ScreenThemes } from '@/constants/screen-theme';
+import { ScreenThemes, type ScreenTheme } from '@/constants/screen-theme';
 import { BottomTabInset } from '@/constants/theme';
+import { useGetPokemonById } from '@/hooks/pokemon-hook';
 import { usePokemonList } from '@/hooks/use-pokemon-list';
 import { useThemePreference } from '@/providers/theme-preference';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,6 +11,12 @@ import { StatusBar } from 'expo-status-bar';
 import { SymbolView } from 'expo-symbols';
 import { ActivityIndicator, FlatList, RefreshControl, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+// Search results only know the id, so each card loads its own details (cached by React Query).
+function SearchResultCard({ id, colors }: { id: number; colors: ScreenTheme }) {
+  const { data } = useGetPokemonById(id);
+  return data ? <PokemonCard item={data} /> : <SkeletonCard colors={colors} />;
+}
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
@@ -27,10 +34,15 @@ export default function HomeScreen() {
     setHeaderHeight,
     fetchData,
     handleRefresh,
-    filteredPokemons,
     featured,
     gridPokemons,
     isInitialLoading,
+    isFiltering,
+    searchMatches,
+    searchResults,
+    loadMoreResults,
+    isSearching,
+    searchError,
   } = usePokemonList();
 
   const listContentStyle = {
@@ -38,6 +50,28 @@ export default function HomeScreen() {
     paddingTop: headerHeight + 12,
     paddingBottom: BottomTabInset + 16,
   };
+
+  const refreshControl = (
+    <RefreshControl
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+      tintColor={colors.text}
+      colors={[colors.accent]}
+    />
+  );
+
+  const listTitle = (title: string, count: number) => (
+    <View className="mb-1 mt-1 flex-row items-end justify-between px-1.5">
+      <Text className="text-lg font-black capitalize" style={{ color: colors.text }}>
+        {title}
+      </Text>
+      <Text
+        className="text-xs font-semibold uppercase tracking-wider"
+        style={{ color: colors.muted }}>
+        {count} Pokémon
+      </Text>
+    </View>
+  );
 
   return (
     <LinearGradient
@@ -68,7 +102,7 @@ export default function HomeScreen() {
         onSelectType={setSelectedType}
       />
 
-      {isInitialLoading ? (
+      {isInitialLoading && !isFiltering ? (
         <FlatList
           data={Array.from({ length: 6 })}
           keyExtractor={(_, idx) => idx.toString()}
@@ -79,71 +113,84 @@ export default function HomeScreen() {
           ListHeaderComponent={<FeaturedSkeleton colors={colors} />}
           showsVerticalScrollIndicator={false}
         />
+      ) : isFiltering ? (
+        <FlatList
+          key="search"
+          data={searchResults}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => <SearchResultCard id={item.id} colors={colors} />}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: 'space-between' }}
+          contentContainerStyle={listContentStyle}
+          onEndReached={loadMoreResults}
+          onEndReachedThreshold={0.5}
+          keyboardDismissMode="on-drag"
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={listTitle(
+            search.trim() ? 'Matches' : `${selectedType} types`,
+            searchMatches.length
+          )}
+          ListEmptyComponent={
+            isSearching ? (
+              <View className="py-16">
+                <ActivityIndicator size="large" color={colors.text} />
+              </View>
+            ) : (
+              <View className="items-center px-6 py-16">
+                <View
+                  className="h-20 w-20 items-center justify-center rounded-full shadow-sm shadow-slate-200"
+                  style={{ backgroundColor: colors.emptyIconBg }}>
+                  <SymbolView
+                    name={
+                      searchError
+                        ? { ios: 'wifi.slash', android: 'wifi_off', web: 'wifi_off' }
+                        : { ios: 'magnifyingglass', android: 'search', web: 'search' }
+                    }
+                    size={36}
+                    tintColor={colors.accent}
+                  />
+                </View>
+                <Text
+                  className="mt-4 text-center text-lg font-black capitalize"
+                  style={{ color: colors.text }}>
+                  {searchError
+                    ? 'Couldn’t search the Pokédex'
+                    : search.trim()
+                      ? `No “${search.trim()}” in the Pokédex`
+                      : `No ${selectedType} Pokémon found`}
+                </Text>
+                <Text className="mt-1 text-center text-md" style={{ color: colors.muted }}>
+                  {searchError
+                    ? 'Check your connection and try again.'
+                    : selectedType
+                      ? 'Try another name or type, or tap All types.'
+                      : 'Try another name or dex number.'}
+                </Text>
+              </View>
+            )
+          }
+        />
       ) : (
         <FlatList
+          key="browse"
           data={gridPokemons}
           keyExtractor={(item) => item.id.toString()}
           renderItem={({ item }) => <PokemonCard item={item} />}
           numColumns={2}
           columnWrapperStyle={{ justifyContent: 'space-between' }}
           contentContainerStyle={listContentStyle}
-          onEndReached={search || selectedType ? undefined : fetchData}
+          onEndReached={fetchData}
           onEndReachedThreshold={0.5}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={colors.text}
-              colors={[colors.accent]}
-            />
-          }
+          refreshControl={refreshControl}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <View>
               {featured ? <FeaturedPokemonCard item={featured} /> : null}
-              <View className="mb-1 mt-1 flex-row items-end justify-between px-1.5">
-                <Text className="text-lg font-black capitalize" style={{ color: colors.text }}>
-                  {search
-                    ? 'Matches'
-                    : selectedType
-                      ? `${selectedType} types`
-                      : 'Living Dex'}
-                </Text>
-                <Text
-                  className="text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: colors.muted }}>
-                  {filteredPokemons.length} Pokémon
-                </Text>
-              </View>
-            </View>
-          }
-          ListEmptyComponent={
-            <View className="items-center px-6 py-16">
-              <View
-                className="h-20 w-20 items-center justify-center rounded-full shadow-sm shadow-slate-200"
-                style={{ backgroundColor: colors.emptyIconBg }}>
-                <SymbolView
-                  name={{ ios: 'magnifyingglass', android: 'search', web: 'search' }}
-                  size={36}
-                  tintColor={colors.accent}
-                />
-              </View>
-              <Text className="mt-4 text-lg font-black capitalize" style={{ color: colors.text }}>
-                {search
-                  ? `No “${search}” in this dex`
-                  : selectedType
-                    ? `No ${selectedType} Pokémon loaded`
-                    : 'No Pokémon in this dex'}
-              </Text>
-              <Text className="mt-1 text-center text-md" style={{ color: colors.muted }}>
-                {selectedType
-                  ? 'Try another type, or tap All types to keep browsing.'
-                  : 'Try another name, or clear search to keep browsing.'}
-              </Text>
+              {listTitle('Living Dex', pokemons.length)}
             </View>
           }
           ListFooterComponent={
-            loading && !search && !selectedType ? (
+            loading ? (
               <View className="py-6">
                 <ActivityIndicator size="large" color={colors.text} />
               </View>

@@ -3,6 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import { PokemonSplashOverlay } from '@/components/pokemon-splash';
+import { FavoritesProvider } from '@/providers/favorites';
 import { ThemePreferenceProvider } from '@/providers/theme-preference';
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -28,7 +29,9 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemePreferenceProvider>
-        <ThemedApp />
+        <FavoritesProvider>
+          <ThemedApp />
+        </FavoritesProvider>
       </ThemePreferenceProvider>
     </QueryClientProvider>
   );

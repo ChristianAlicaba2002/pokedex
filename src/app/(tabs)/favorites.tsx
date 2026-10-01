@@ -26,16 +26,6 @@ export default function FavoritesScreen() {
       end={{ x: 1, y: 1 }}
       className="flex-1">
       <StatusBar style={colors.statusBar} />
-      <View
-        pointerEvents="none"
-        className="absolute -left-16 top-64 h-56 w-56 rounded-full"
-        style={{ backgroundColor: colors.orb }}
-      />
-      <View
-        pointerEvents="none"
-        className="absolute -right-10 top-96 h-48 w-48 rounded-full"
-        style={{ backgroundColor: colors.orbAlt }}
-      />
 
       <View className="overflow-hidden px-5 pb-2" style={{ paddingTop: insets.top + 10 }}>
         <PokeBallMark color={colors.pokeball} size={168} className="absolute -right-8 top-6" />

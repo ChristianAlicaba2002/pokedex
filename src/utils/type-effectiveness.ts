@@ -39,15 +39,20 @@ export type DefensiveMatchups = {
   immune: TypeMatchup[];
 };
 
+// Damage multiplier of one attacking type against a Pokémon with the given types.
+export function getAttackMultiplier(attackingType: string, defendingTypes: string[]) {
+  return defendingTypes.reduce(
+    (total, defending) => total * (TYPE_CHART[attackingType]?.[defending] ?? 1),
+    1
+  );
+}
+
 // How much damage each attacking type deals to a Pokémon with the given types.
 export function getDefensiveMatchups(defendingTypes: string[]): DefensiveMatchups {
   const result: DefensiveMatchups = { weak: [], resistant: [], immune: [] };
 
   for (const attacking of ALL_TYPES) {
-    const multiplier = defendingTypes.reduce(
-      (total, defending) => total * (TYPE_CHART[attacking][defending] ?? 1),
-      1
-    );
+    const multiplier = getAttackMultiplier(attacking, defendingTypes);
     if (multiplier === 0) result.immune.push({ type: attacking, multiplier });
     else if (multiplier > 1) result.weak.push({ type: attacking, multiplier });
     else if (multiplier < 1) result.resistant.push({ type: attacking, multiplier });
@@ -62,4 +67,11 @@ export function formatMultiplier(multiplier: number) {
   if (multiplier === 0.25) return '¼×';
   if (multiplier === 0.5) return '½×';
   return `${multiplier}×`;
+}
+
+export function describeMultiplier(multiplier: number) {
+  if (multiplier === 0) return 'No effect';
+  if (multiplier > 1) return 'Super effective';
+  if (multiplier < 1) return 'Not very effective';
+  return 'Normal damage';
 }

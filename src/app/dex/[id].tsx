@@ -311,6 +311,13 @@ export default function PokemonDetailScreen() {
                 onPress={() => pokemon.data && toggleFavorite(pokemon.data)}
               />
               <CircleButton
+                icon={{ ios: 'arrow.left.arrow.right', android: 'compare_arrows', web: 'compare_arrows' }}
+                label="Compare with another Pokémon"
+                onPress={() =>
+                  router.push({ pathname: '/compare', params: { a: String(pokemonId) } })
+                }
+              />
+              <CircleButton
                 icon={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }}
                 label={shiny ? 'Show normal colors' : 'Show shiny colors'}
                 active={shiny}

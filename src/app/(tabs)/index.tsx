@@ -1,4 +1,5 @@
 import { FeaturedPokemonCard, PokemonCard } from '@/components/pokemon-card';
+import { RecentlyViewed } from '@/components/recently-viewed';
 import { FeaturedSkeleton, SkeletonCard } from '@/components/skeleton-card';
 import { StickyHeader } from '@/components/sticky-header';
 import { ScreenThemes, type ScreenTheme } from '@/constants/screen-theme';
@@ -186,6 +187,7 @@ export default function HomeScreen() {
           ListHeaderComponent={
             <View>
               {featured ? <FeaturedPokemonCard item={featured} /> : null}
+              <RecentlyViewed colors={colors} />
               {listTitle('Living Dex', pokemons.length)}
             </View>
           }

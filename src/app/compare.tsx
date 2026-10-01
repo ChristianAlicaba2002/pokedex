@@ -32,7 +32,6 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
-  ZoomIn,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -201,24 +200,38 @@ function PokemonSlot({
   );
 }
 
+// Fills from empty to its value once, so the comparison "races" in.
 function StatBar({
   value,
   color,
   track,
   align,
+  delay = 0,
 }: {
   value: number;
   color: string;
   track: string;
   align: 'left' | 'right';
+  delay?: number;
 }) {
+  const target = Math.min(100, (value / MAX_BASE_STAT) * 100);
+  const width = useSharedValue(0);
+
+  useEffect(() => {
+    width.value = withDelay(
+      delay,
+      withTiming(target, { duration: 700, easing: Easing.out(Easing.cubic) })
+    );
+  }, [target, delay, width]);
+
+  const fillStyle = useAnimatedStyle(() => ({ width: `${width.value}%` }));
+
   return (
     <View
       className={`h-2.5 flex-1 overflow-hidden rounded-full ${align === 'right' ? 'flex-row-reverse' : 'flex-row'}`}
       style={{ backgroundColor: track }}>
-      <View
-        className="h-full rounded-full"
-        style={{ width: `${Math.min(100, (value / MAX_BASE_STAT) * 100)}%`, backgroundColor: color }}
+      <Animated.View
+        style={[{ height: '100%', borderRadius: 999, backgroundColor: color }, fillStyle]}
       />
     </View>
   );
@@ -253,7 +266,7 @@ function StatsComparison({
         </Text>
       </View>
 
-      {Object.keys(STAT_LABELS).map((stat) => {
+      {Object.keys(STAT_LABELS).map((stat, index) => {
         const valueA = statOf(a, stat);
         const valueB = statOf(b, stat);
         return (
@@ -263,13 +276,25 @@ function StatsComparison({
               style={valueStyle(valueA, valueB, colorA)}>
               {valueA}
             </Text>
-            <StatBar value={valueA} color={colorA} track={colors.searchBg} align="right" />
+            <StatBar
+              value={valueA}
+              color={colorA}
+              track={colors.searchBg}
+              align="right"
+              delay={index * 90}
+            />
             <Text
               className="w-16 text-center text-[11px] font-bold uppercase"
               style={{ color: colors.muted }}>
               {STAT_LABELS[stat]}
             </Text>
-            <StatBar value={valueB} color={colorB} track={colors.searchBg} align="left" />
+            <StatBar
+              value={valueB}
+              color={colorB}
+              track={colors.searchBg}
+              align="left"
+              delay={index * 90}
+            />
             <Text
               className="w-9 text-right text-sm font-black"
               style={valueStyle(valueB, valueA, colorB)}>
@@ -304,10 +329,12 @@ function AttackMatchups({
   attacker,
   defender,
   colors,
+  delay = 0,
 }: {
   attacker: TPokemonData;
   defender: TPokemonData;
   colors: ScreenTheme;
+  delay?: number;
 }) {
   return (
     <View className="mt-4">
@@ -316,13 +343,15 @@ function AttackMatchups({
         <Text className="capitalize">{formatName(defender.name)}</Text>
       </Text>
       <View className="mt-2 gap-2">
-        {typesOf(attacker).map((type) => {
+        {typesOf(attacker).map((type, index) => {
           const multiplier = getAttackMultiplier(type, typesOf(defender));
           const strong = multiplier > 1;
           const weak = multiplier < 1;
           return (
-            <View
+            <Animated.View
               key={type}
+              entering={FadeInDown.delay(delay + index * 90).duration(300)}>
+            <View
               className="flex-row items-center rounded-2xl px-3 py-2.5"
               style={{ backgroundColor: colors.searchBg }}>
               <View
@@ -341,6 +370,7 @@ function AttackMatchups({
                 {formatMultiplier(multiplier)}
               </Text>
             </View>
+            </Animated.View>
           );
         })}
       </View>
@@ -477,6 +507,92 @@ function BattleScene({ a, b }: { a: TPokemonData; b: TPokemonData }) {
   );
 }
 
+const SPRINKLE_COLORS = ['#FDE047', '#F472B6', '#60A5FA', '#34D399', '#FFFFFF', '#FB923C'];
+const SPRINKLE_COUNT = 18;
+
+type SprinkleConfig = { left: number; delay: number; spin: number; drift: number; color: string };
+
+function makeSprinkles(): SprinkleConfig[] {
+  return Array.from({ length: SPRINKLE_COUNT }, (_, i) => ({
+    left: Math.random() * 100,
+    delay: Math.random() * 350,
+    spin: (Math.random() < 0.5 ? -1 : 1) * (360 + Math.random() * 360),
+    drift: (Math.random() - 0.5) * 40,
+    color: SPRINKLE_COLORS[i % SPRINKLE_COLORS.length],
+  }));
+}
+
+// One confetti piece: falls once across the banner while spinning, then fades out.
+function Sprinkle({ left, delay, spin, drift, color }: SprinkleConfig) {
+  const progress = useSharedValue(0);
+
+  useEffect(() => {
+    progress.value = withDelay(
+      delay,
+      withTiming(1, { duration: 1600, easing: Easing.out(Easing.quad) })
+    );
+    return () => cancelAnimation(progress);
+  }, [delay, progress]);
+
+  const style = useAnimatedStyle(() => ({
+    opacity: progress.value < 0.7 ? 1 : 1 - (progress.value - 0.7) / 0.3,
+    transform: [
+      { translateY: progress.value * 190 },
+      { translateX: progress.value * drift },
+      { rotate: `${progress.value * spin}deg` },
+    ],
+  }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        {
+          position: 'absolute',
+          top: -12,
+          left: `${left}%`,
+          width: 6,
+          height: 11,
+          borderRadius: 2,
+          backgroundColor: color,
+        },
+        style,
+      ]}
+    />
+  );
+}
+
+// A single streak of light that glides across the banner once.
+function Shine() {
+  const x = useSharedValue(-1);
+
+  useEffect(() => {
+    x.value = withDelay(350, withTiming(1, { duration: 1000, easing: Easing.inOut(Easing.quad) }));
+    return () => cancelAnimation(x);
+  }, [x]);
+
+  const style = useAnimatedStyle(() => ({
+    transform: [{ translateX: x.value * 420 }, { rotate: '20deg' }],
+  }));
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        {
+          position: 'absolute',
+          top: -40,
+          bottom: -40,
+          left: '40%',
+          width: 56,
+          backgroundColor: 'rgba(255,255,255,0.22)',
+        },
+        style,
+      ]}
+    />
+  );
+}
+
 function WinnerReveal({
   winner,
   confidence,
@@ -498,6 +614,7 @@ function WinnerReveal({
   }, [float]);
 
   const floatStyle = useAnimatedStyle(() => ({ transform: [{ translateY: float.value }] }));
+  const [sprinkles] = useState(makeSprinkles);
 
   return (
     <Animated.View entering={FadeIn.duration(250)}>
@@ -508,7 +625,7 @@ function WinnerReveal({
         className="overflow-hidden px-4 py-4">
         <PokeBallMark color="#FFFFFF" size={150} className="absolute -bottom-10 -right-8" />
         <View className="flex-row items-center">
-          <Animated.View style={{ flex: 1 }} entering={ZoomIn.springify().damping(14)}>
+          <Animated.View style={{ flex: 1 }} entering={FadeIn.duration(300)}>
             <View className="flex-row items-center gap-1.5">
               <SymbolView
                 name={{ ios: 'trophy.fill', android: 'emoji_events', web: 'emoji_events' }}
@@ -527,7 +644,7 @@ function WinnerReveal({
             </View>
           </Animated.View>
           {winner ? (
-            <Animated.View entering={ZoomIn.delay(150).springify().damping(14)}>
+            <Animated.View entering={FadeIn.delay(150).duration(300)}>
               <Animated.View style={floatStyle}>
                 <Image
                   source={{ uri: getPokemonArtwork(winner.id) }}
@@ -538,6 +655,8 @@ function WinnerReveal({
             </Animated.View>
           ) : null}
         </View>
+        <Shine />
+        {winner ? sprinkles.map((sprinkle, index) => <Sprinkle key={index} {...sprinkle} />) : null}
       </LinearGradient>
     </Animated.View>
   );
@@ -651,9 +770,9 @@ function Verdict({ a, b, colors }: { a: TPokemonData; b: TPokemonData; colors: S
 
   return (
     <View className="mt-3 gap-2">
-      {lines.map((line) => (
+      {lines.map((line, index) => (
+        <Animated.View key={line.label} entering={FadeInDown.delay(index * 90).duration(300)}>
         <View
-          key={line.label}
           className="flex-row items-center rounded-2xl px-3 py-3"
           style={{ backgroundColor: colors.searchBg }}>
           <SymbolView name={line.icon} size={18} tintColor={colors.accent} />
@@ -668,6 +787,7 @@ function Verdict({ a, b, colors }: { a: TPokemonData; b: TPokemonData; colors: S
             </Text>
           </View>
         </View>
+        </Animated.View>
       ))}
     </View>
   );
@@ -761,7 +881,7 @@ export default function CompareScreen() {
         </View>
 
         {a && b ? (
-          <View className="mt-5 gap-4">
+          <View key={`${a.id}-${b.id}`} className="mt-5 gap-4">
             <WinnerCard key={`${a.id}-${b.id}`} a={a} b={b} colors={colors} />
 
             <Section title="Summary" colors={colors}>
@@ -777,7 +897,7 @@ export default function CompareScreen() {
                 How each Pokémon’s own types hit the other.
               </Text>
               <AttackMatchups attacker={a} defender={b} colors={colors} />
-              <AttackMatchups attacker={b} defender={a} colors={colors} />
+              <AttackMatchups attacker={b} defender={a} colors={colors} delay={200} />
             </Section>
           </View>
         ) : (

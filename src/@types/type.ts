@@ -36,6 +36,8 @@ export type TPokemonData = {
     }
 }
 
+export type TFavoritePokemon = Pick<TPokemonData, 'id' | 'name' | 'height' | 'weight' | 'types' | 'stats'>
+
 export type TPokemon = {
     id: number
     name: string

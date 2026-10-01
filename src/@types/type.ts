@@ -33,7 +33,16 @@ export type TPokemonData = {
         back_default: string
         front_shiny: string,
         back_shiny: string
-    }
+    },
+
+    moves: {
+        move: TNamedResource,
+        version_group_details: {
+            level_learned_at: number,
+            move_learn_method: TNamedResource,
+            version_group: TNamedResource
+        }[]
+    }[]
 }
 
 export type TFavoritePokemon = Pick<TPokemonData, 'id' | 'name' | 'height' | 'weight' | 'types' | 'stats'>
@@ -88,4 +97,36 @@ export type TEvolutionNode = {
 export type TEvolutionChain = {
     id: number,
     chain: TEvolutionNode
+}
+
+export type TEffectEntry = {
+    effect: string,
+    short_effect: string,
+    language: TNamedResource
+}
+
+export type TFlavorTextEntry = {
+    flavor_text: string,
+    language: TNamedResource,
+    version_group: TNamedResource
+}
+
+export type TAbility = {
+    id: number,
+    name: string,
+    effect_entries: TEffectEntry[],
+    flavor_text_entries: TFlavorTextEntry[]
+}
+
+export type TMove = {
+    id: number,
+    name: string,
+    accuracy: number | null,
+    power: number | null,
+    pp: number | null,
+    effect_chance: number | null,
+    type: TNamedResource,
+    damage_class: TNamedResource,
+    effect_entries: TEffectEntry[],
+    flavor_text_entries: TFlavorTextEntry[]
 }

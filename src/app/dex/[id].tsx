@@ -1,6 +1,7 @@
 import { PokemonCompareHistory } from '@/components/compare-history';
 import { PokeBallMark } from '@/components/poke-ball-mark';
 import { PokemonAbilities } from '@/components/pokemon-abilities';
+import { RecordStrip } from '@/components/pokemon-card';
 import { PokemonModelViewer } from '@/components/pokemon-model-viewer';
 import { PokemonMoves } from '@/components/pokemon-moves';
 import { ScreenThemes, type ScreenTheme } from '@/constants/screen-theme';
@@ -10,6 +11,7 @@ import {
   useGetPokemonById,
   useGetPokemonSpecies,
 } from '@/hooks/pokemon-hook';
+import { useCompareHistory } from '@/providers/compare-history';
 import { useFavorites } from '@/providers/favorites';
 import { useRecentlyViewed } from '@/providers/recently-viewed';
 import { useThemePreference } from '@/providers/theme-preference';
@@ -229,6 +231,7 @@ export default function PokemonDetailScreen() {
   const [shiny, setShiny] = useState(false);
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorite = isFavorite(pokemonId);
+  const record = useCompareHistory().getRecord(pokemonId);
 
   const pokemon = useGetPokemonById(pokemonId);
   const { addRecent } = useRecentlyViewed();
@@ -370,6 +373,8 @@ export default function PokemonDetailScreen() {
               </View>
             ) : null}
           </View>
+
+          <RecordStrip record={record} className="mt-3 self-start" />
 
           <View className="mt-2">
             <PokemonModelViewer id={pokemonId} shiny={shiny} height={280} />

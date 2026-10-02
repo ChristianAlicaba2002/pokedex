@@ -1,8 +1,10 @@
 import { TPokemonData } from '@/@types/type';
+import { PokemonCompareHistory } from '@/components/compare-history';
 import { PokeBallMark } from '@/components/poke-ball-mark';
 import { PokemonPicker } from '@/components/pokemon-picker';
 import { ScreenThemes, type ScreenTheme } from '@/constants/screen-theme';
 import { useGetPokemonById } from '@/hooks/pokemon-hook';
+import { useCompareHistory } from '@/providers/compare-history';
 import { useThemePreference } from '@/providers/theme-preference';
 import { predictBattle, type AttackPlan } from '@/utils/battle-prediction';
 import { formatDexNumber, formatName } from '@/utils/pokeapi';
@@ -351,25 +353,25 @@ function AttackMatchups({
             <Animated.View
               key={type}
               entering={FadeInDown.delay(delay + index * 90).duration(300)}>
-            <View
-              className="flex-row items-center rounded-2xl px-3 py-2.5"
-              style={{ backgroundColor: colors.searchBg }}>
               <View
-                className="rounded-full px-2.5 py-1"
-                style={{ backgroundColor: getTypePalette(type).bg }}>
-                <Text className="text-[11px] font-bold uppercase text-white">{type}</Text>
+                className="flex-row items-center rounded-2xl px-3 py-2.5"
+                style={{ backgroundColor: colors.searchBg }}>
+                <View
+                  className="rounded-full px-2.5 py-1"
+                  style={{ backgroundColor: getTypePalette(type).bg }}>
+                  <Text className="text-[11px] font-bold uppercase text-white">{type}</Text>
+                </View>
+                <Text
+                  className="ml-3 flex-1 text-sm font-semibold"
+                  style={{ color: colors.text }}>
+                  {describeMultiplier(multiplier)}
+                </Text>
+                <Text
+                  className="text-base font-black"
+                  style={{ color: strong ? '#16A34A' : weak ? '#DC2626' : colors.muted }}>
+                  {formatMultiplier(multiplier)}
+                </Text>
               </View>
-              <Text
-                className="ml-3 flex-1 text-sm font-semibold"
-                style={{ color: colors.text }}>
-                {describeMultiplier(multiplier)}
-              </Text>
-              <Text
-                className="text-base font-black"
-                style={{ color: strong ? '#16A34A' : weak ? '#DC2626' : colors.muted }}>
-                {formatMultiplier(multiplier)}
-              </Text>
-            </View>
             </Animated.View>
           );
         })}
@@ -667,6 +669,12 @@ function WinnerCard({ a, b, colors }: { a: TPokemonData; b: TPokemonData; colors
   const winner = prediction.winner === 'a' ? a : prediction.winner === 'b' ? b : null;
   const [round, setRound] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const { addComparison } = useCompareHistory();
+
+  // Log the matchup as soon as both Pokémon are loaded, even if the battle is skipped.
+  useEffect(() => {
+    addComparison(a, b, prediction.winner);
+  }, [a, b, prediction.winner, addComparison]);
 
   useEffect(() => {
     setRevealed(false);
@@ -772,21 +780,21 @@ function Verdict({ a, b, colors }: { a: TPokemonData; b: TPokemonData; colors: S
     <View className="mt-3 gap-2">
       {lines.map((line, index) => (
         <Animated.View key={line.label} entering={FadeInDown.delay(index * 90).duration(300)}>
-        <View
-          className="flex-row items-center rounded-2xl px-3 py-3"
-          style={{ backgroundColor: colors.searchBg }}>
-          <SymbolView name={line.icon} size={18} tintColor={colors.accent} />
-          <View className="ml-3 flex-1">
-            <Text
-              className="text-[10px] font-bold uppercase tracking-wider"
-              style={{ color: colors.muted }}>
-              {line.label}
-            </Text>
-            <Text className="text-sm font-black" style={{ color: colors.text }}>
-              {line.text}
-            </Text>
+          <View
+            className="flex-row items-center rounded-2xl px-3 py-3"
+            style={{ backgroundColor: colors.searchBg }}>
+            <SymbolView name={line.icon} size={18} tintColor={colors.accent} />
+            <View className="ml-3 flex-1">
+              <Text
+                className="text-[10px] font-bold uppercase tracking-wider"
+                style={{ color: colors.muted }}>
+                {line.label}
+              </Text>
+              <Text className="text-sm font-black" style={{ color: colors.text }}>
+                {line.text}
+              </Text>
+            </View>
           </View>
-        </View>
         </Animated.View>
       ))}
     </View>
@@ -915,8 +923,14 @@ export default function CompareScreen() {
             <Text className="mt-1 text-center text-sm" style={{ color: colors.muted }}>
               See their base stats side by side and how their types match up.
             </Text>
+
           </View>
         )}
+        <View className="mt-5 gap-4">
+          <Section title="Compare History" colors={colors}>
+            <PokemonCompareHistory id={Number(idA)} colors={colors} />
+          </Section>
+        </View>
       </ScrollView>
 
       <PokemonPicker

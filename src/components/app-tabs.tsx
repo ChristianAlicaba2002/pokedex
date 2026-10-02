@@ -41,6 +41,15 @@ export default function AppTabs() {
           />
         </NativeTabs.Trigger>
 
+        {/* HistoryScreen */}
+        <NativeTabs.Trigger name="history">
+          <NativeTabs.Trigger.Label>History</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon
+            src={<NativeTabs.Trigger.VectorIcon family={MaterialCommunityIcons} name="history" />}
+            renderingMode="template"
+          />
+        </NativeTabs.Trigger>
+
         {/* MoreScreen */}
         <NativeTabs.Trigger name="settings">
           <NativeTabs.Trigger.Label>More</NativeTabs.Trigger.Label>

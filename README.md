@@ -1,44 +1,57 @@
 # Pokédex
 
-A cross-platform Pokédex app built with [Expo](https://expo.dev) and [React Native](https://reactnative.dev). Browse and search Pokémon data from the [PokéAPI](https://pokeapi.co/), with support for Android, iOS, and web.
+> **Midterm Project — CS41A**
+
+A cross-platform Pokédex app built with [Expo](https://expo.dev) and [React Native](https://reactnative.dev). Browse every Pokémon from [PokéAPI](https://pokeapi.co/), explore each region's dex, view 3D models, and pit two Pokémon against each other with a battle predictor. Runs on Android, iOS, and web from one codebase.
 
 ## Features
 
-- **Cross-platform** — Runs on Android, iOS, and web from a single codebase
-- **PokéAPI integration** — Fetches Pokémon data via a typed API service layer
-- **React Query** — Caches and manages server state for Pokémon requests
-- **File-based routing** — Navigation powered by [Expo Router](https://docs.expo.dev/router/introduction/)
-- **Light & dark mode** — Automatic theme support based on system preferences
-- **Native tab navigation** — Home and Explore tabs using Expo's native tabs
+- **National Dex** — Infinite-scrolling grid that loads 30 Pokémon at a time, with pull-to-refresh and skeleton loaders
+- **Search & type filter** — Search by name or dex number (`25`, `#025`) and filter by type across *all* Pokémon, not just the pages already loaded
+- **Regional Pokédex** — Browse Kanto through Paldea (Gen I–IX) in each region's original dex order
+- **Pokémon details** — Pokédex entry, genus, base stats, type matchups, abilities, moves, and the full evolution chain
+- **3D models** — Auto-rotating 3D model viewer with a shiny toggle on Android and iOS (web shows the official artwork instead)
+- **Compare & battle prediction** — Pick any two Pokémon to compare stats and type matchups, and get a predicted winner with a confidence rating
+- **Compare history** — Past matchups are saved, with a win/loss/draw record shown per Pokémon
+- **Favorites & Recently Viewed** — Heart Pokémon to keep them in Favorites; recently opened Pokémon appear on the Home screen
+- **Theming** — Light, Dark, or follow the system setting
+- **Saved on device** — Favorites, recently viewed, compare history, and theme preference are stored locally with AsyncStorage (Pokémon data itself is fetched live from PokéAPI)
+
+## Screens
+
+| Tab / Route | What it does |
+| --- | --- |
+| **Home** (`(tabs)/index`) | National Dex grid, search, type filter, featured Pokémon, recently viewed |
+| **Pokedex** (`(tabs)/pokemon`) | Region selector and regional dex lists |
+| **Favorites** (`(tabs)/favorites`) | Your hearted Pokémon |
+| **History** (`(tabs)/history`) | Saved compare matchups |
+| **More** (`(tabs)/settings`) | Theme, collection stats, data sources, app info |
+| `dex/[id]` | Pokémon detail page |
+| `compare?a=&b=` | Side-by-side comparison and battle prediction |
 
 ## Tech Stack
 
 | Category | Technology |
 | --- | --- |
-| Framework | Expo SDK 57, React Native 0.86 |
+| Framework | Expo SDK 57, React Native 0.86, React 19 |
 | Language | TypeScript |
-| Routing | Expo Router |
+| Routing | Expo Router (typed routes, native tabs) |
+| Styling | NativeWind (Tailwind CSS) |
 | Data fetching | TanStack React Query, Axios |
-| API | [PokéAPI v2](https://pokeapi.co/docs/v2) |
-| UI | React Native, Expo Image, Reanimated |
+| Storage | AsyncStorage |
+| 3D | `<model-viewer>` in a WebView |
+| Other | Expo Image, Reanimated, Linear Gradient, React Compiler |
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) (LTS recommended)
-- pnpm
-- For mobile development: [Expo Go](https://expo.dev/go) on a physical device, or Android Studio / Xcode for emulators
+- [Node.js](https://nodejs.org/) 22 (the version used in CI)
+- [pnpm](https://pnpm.io/)
+- For mobile: [Expo Go](https://expo.dev/go) on a physical device, or Android Studio / Xcode for emulators
 
 ## Getting Started
 
 ### 1. Clone the repository
 
-Using SSH
-```bash
-git clone git@github.com:ChristianAlicaba2002/pokedex.git
-cd pokedex
-```
-
-Using HTTPS
 ```bash
 git clone https://github.com/ChristianAlicaba2002/pokedex.git
 cd pokedex
@@ -52,44 +65,83 @@ pnpm install
 
 ### 3. Configure environment variables
 
-Create a `.env` file in the project root (or copy from the example below):
+Create a `.env` file in the project root:
 
 ```env
-EXPO_PUBLIC_API_BASE_URL=
+EXPO_PUBLIC_API_BASE_URL=https://pokeapi.co/api/v2
 ```
 
 ### 4. Start the development server
 
 ```bash
-npx expo start
+pnpm start
 ```
 
-```bash
-pnpm start -c
+Add `-c` (`pnpm start -c`) to clear the Metro cache if something looks stale. From the Expo CLI you can press **a** for Android, **i** for the iOS simulator, **w** for web, or scan the QR code with Expo Go.
+
+## Scripts
+
+| Command | Description |
+| --- | --- |
+| `pnpm start` | Start the Expo dev server |
+| `pnpm android` | Start and open on Android |
+| `pnpm ios` | Start and open on iOS |
+| `pnpm web` | Start and open in the browser |
+| `pnpm lint` | Run ESLint via `expo lint` |
+
+## Project Structure
+
+```
+src/
+├── app/                 # Expo Router routes
+│   ├── (tabs)/          # Home, Pokedex, Favorites, History, More
+│   ├── dex/[id].tsx     # Pokémon detail
+│   ├── compare.tsx      # Compare & battle prediction
+│   └── _layout.tsx      # Root layout and providers
+├── components/          # UI components (cards, model viewer, picker, moves, abilities…)
+├── hooks/               # React Query hooks and list/search logic
+├── providers/           # Favorites, recently viewed, compare history, theme (AsyncStorage)
+├── services/api/        # Axios instance and PokéAPI calls
+├── utils/               # Battle prediction, type effectiveness, PokéAPI helpers
+├── constants/           # Regions, themes, colors
+└── @types/              # PokéAPI response types
 ```
 
-From the Expo CLI menu you can:
+## How the Battle Prediction Works
 
-- Press **a** to open on Android
-- Press **i** to open on iOS simulator
-- Press **w** to open in the browser
-- Scan the QR code with Expo Go on your phone
+The compare screen gives a rough 1-on-1 estimate, not a full battle simulation. Both Pokémon are treated as level 50 with perfect IVs and no EVs, items, or abilities. Each one uses its best 80-power same-type attack (physical or special, whichever hits harder), with STAB and type effectiveness applied. The Pokémon that needs fewer hits to KO wins; on a tie, the faster one wins. The gap in hits decides the confidence: *Close fight*, *Likely*, or *Strong favorite*. See `src/utils/battle-prediction.ts`.
 
 ## API Layer
 
-The app communicates with PokéAPI through a small service layer:
+- **`src/services/api/axios.ts`** — Axios instance using `EXPO_PUBLIC_API_BASE_URL`
+- **`src/services/api/pokemon-api.ts`** — Endpoints for Pokémon, species, pokedexes, evolution chains, types, abilities, and moves
+- **`src/hooks/pokemon-hook.ts`** — React Query hooks (`useGetPokemon`, `useGetPokemonById`, `useGetPokedex`, `useGetPokemonSpecies`, `useGetEvolutionChain`, `useGetPokemonByType`, `useGetAbility`, `useGetMove`, …). Detail queries use `staleTime: Infinity` since Pokémon data rarely changes.
 
-- **`src/services/api/axios.ts`** — Axios instance configured with `EXPO_PUBLIC_API_BASE_URL`
-- **`src/services/api/pokemon-api.ts`** — Functions to fetch Pokémon by name or ID
-- **`src/hooks/pokemon-hook.ts`** — React Query hooks:
-  - `useGetPokemon(name)` — Search Pokémon by name
-  - `useGetPokemonById(id)` — Fetch a single Pokémon by ID
+## CI
 
-Pokémon data is typed in `src/@types/type.ts` (`TPokemonData`), covering stats, types, abilities, and sprites.
+GitHub Actions (`.github/workflows/ci.yml`) runs on pushes and pull requests to `main` and `develop`: it installs dependencies with a frozen lockfile and exports the web bundle to make sure the app builds.
 
 ## Development Notes
 
-- Source code lives under **`src/`**, with routes in **`src/app/`**
-- Path aliases are configured in `tsconfig.json` — use `@/` to import from `src/`
-- The React Compiler is enabled via `app.json` experiments
-- Platform-specific files use the `.web.tsx` suffix (e.g. `app-tabs.web.tsx`)
+- Use the `@/` path alias to import from `src/`
+- Platform-specific files use the `.web.tsx` / `.web.ts` suffix
+- The React Compiler and typed routes are enabled in `app.json`
+- This project targets Expo SDK 57 — check the [v57 docs](https://docs.expo.dev/versions/v57.0.0/) before changing native APIs
+
+## Team
+
+- Christian Dave Alicaba
+- John Cez Casupanan
+- Kent Jay Otadoy
+
+## Data Sources
+
+- Pokémon data: [PokéAPI](https://pokeapi.co/)
+- Artwork & sprites: [PokeAPI/sprites](https://github.com/PokeAPI/sprites)
+- 3D models: [Pokemon-3D-api/assets](https://github.com/Pokemon-3D-api/assets)
+
+Pokémon and Pokémon character names are trademarks of Nintendo, Creatures Inc., and GAME FREAK inc. This is a fan project and is not affiliated with them.
+
+## License
+
+[MIT](LICENSE)

@@ -1,3 +1,4 @@
+import { PokemonCompareHistory } from '@/components/compare-history';
 import { PokeBallMark } from '@/components/poke-ball-mark';
 import { PokemonAbilities } from '@/components/pokemon-abilities';
 import { PokemonModelViewer } from '@/components/pokemon-model-viewer';
@@ -559,6 +560,10 @@ export default function PokemonDetailScreen() {
                 ))}
               </View>
             )}
+          </Section>
+
+          <Section title="Compare History" colors={colors}>
+            <PokemonCompareHistory id={pokemonId} colors={colors} />
           </Section>
 
           <Section title="Moves" colors={colors}>

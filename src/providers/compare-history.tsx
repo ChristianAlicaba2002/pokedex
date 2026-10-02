@@ -13,8 +13,13 @@ export type TCompareEntry = {
   comparedAt: number;
 };
 
+export type TCompareRecord = { wins: number; losses: number; draws: number };
+
+const EMPTY_RECORD: TCompareRecord = { wins: 0, losses: 0, draws: 0 };
+
 type CompareHistoryContextValue = {
   history: TCompareEntry[];
+  getRecord: (id: number) => TCompareRecord;
   addComparison: (a: TPokemonData, b: TPokemonData, winner: TCompareEntry['winner']) => void;
   removeComparison: (entry: TCompareEntry) => void;
   clearHistory: () => void;
@@ -83,9 +88,31 @@ export function CompareHistoryProvider({ children }: { children: React.ReactNode
 
   const clearHistory = useCallback(() => setHistory([]), []);
 
+  // Win/loss/draw tally per Pokémon, built once per history change.
+  const records = useMemo(() => {
+    const map = new Map<number, TCompareRecord>();
+    const tally = (id: number, key: keyof TCompareRecord) => {
+      const record = map.get(id) ?? { ...EMPTY_RECORD };
+      record[key]++;
+      map.set(id, record);
+    };
+    for (const e of history) {
+      if (e.winner === 'tie') {
+        tally(e.a.id, 'draws');
+        tally(e.b.id, 'draws');
+      } else {
+        tally(e.a.id, e.winner === 'a' ? 'wins' : 'losses');
+        tally(e.b.id, e.winner === 'b' ? 'wins' : 'losses');
+      }
+    }
+    return map;
+  }, [history]);
+
+  const getRecord = useCallback((id: number) => records.get(id) ?? EMPTY_RECORD, [records]);
+
   const value = useMemo(
-    () => ({ history, addComparison, removeComparison, clearHistory }),
-    [history, addComparison, removeComparison, clearHistory]
+    () => ({ history, getRecord, addComparison, removeComparison, clearHistory }),
+    [history, getRecord, addComparison, removeComparison, clearHistory]
   );
 
   return (

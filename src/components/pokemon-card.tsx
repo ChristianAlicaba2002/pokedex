@@ -1,5 +1,6 @@
 import { TFavoritePokemon, TPokemonData } from '@/@types/type';
 import { PokeBallMark } from '@/components/poke-ball-mark';
+import { useCompareHistory, type TCompareRecord } from '@/providers/compare-history';
 import { useFavorites } from '@/providers/favorites';
 import { createPokemonCardData } from '@/utils/pokemon-card-data';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -24,10 +25,42 @@ function TypeChip({ name, compact = false }: { name: string; compact?: boolean }
   );
 }
 
+// Battle standing from compare history: wins, losses, draws.
+export function RecordStrip({
+  record,
+  className = 'mb-3 mt-2',
+}: {
+  record: TCompareRecord;
+  className?: string;
+}) {
+  const battles = record.wins + record.losses + record.draws;
+  const cells = [
+    { label: 'W', value: record.wins, color: '#86EFAC' },
+    { label: 'L', value: record.losses, color: '#FCA5A5' },
+    { label: 'D', value: record.draws, color: '#FFFFFF' },
+  ];
+
+  return (
+    <View
+      accessibilityLabel={`Record: ${record.wins} wins, ${record.losses} losses, ${record.draws} draws`}
+      className={`${className} flex-row items-center justify-center gap-2 rounded-full bg-black/15 px-2.5 py-1 ${battles === 0 ? 'opacity-60' : ''}`}>
+      {cells.map((cell) => (
+        <View key={cell.label} className="flex-row items-baseline gap-0.5">
+          <Text className="text-[10px] font-bold text-white/70">{cell.label}</Text>
+          <Text className="text-xs font-black" style={{ color: cell.color }}>
+            {cell.value}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export function PokemonCard({ item }: { item: TFavoritePokemon }) {
   const card = createPokemonCardData(item);
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorite = isFavorite(item.id);
+  const record = useCompareHistory().getRecord(item.id);
 
   return (
     <Pressable
@@ -89,6 +122,8 @@ export function PokemonCard({ item }: { item: TFavoritePokemon }) {
               <Text className="text-[11px] font-black text-white">{card.hp}</Text>
             </View>
           </View>
+
+          <RecordStrip record={record} />
         </LinearGradient>
 
         <View className="absolute -top-9 left-0 right-0 items-center" pointerEvents="none">

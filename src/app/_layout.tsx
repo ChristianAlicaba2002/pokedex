@@ -1,18 +1,45 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { PokemonSplashOverlay } from '@/components/pokemon-splash';
+import { CompareHistoryProvider } from '@/providers/compare-history';
+import { FavoritesProvider } from '@/providers/favorites';
+import { RecentlyViewedProvider } from '@/providers/recently-viewed';
+import { ThemePreferenceProvider } from '@/providers/theme-preference';
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 SplashScreen.preventAutoHideAsync();
+SplashScreen.setOptions({ duration: 400, fade: true });
 
-export default function TabLayout() {
+function ThemedApp() {
   const colorScheme = useColorScheme();
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+      <PokemonSplashOverlay />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="dex/[id]" />
+        <Stack.Screen name="compare" />
+      </Stack>
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemePreferenceProvider>
+        <FavoritesProvider>
+          <RecentlyViewedProvider>
+            <CompareHistoryProvider>
+              <ThemedApp />
+            </CompareHistoryProvider>
+          </RecentlyViewedProvider>
+        </FavoritesProvider>
+      </ThemePreferenceProvider>
+    </QueryClientProvider>
   );
 }

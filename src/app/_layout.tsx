@@ -3,6 +3,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import { PokemonSplashOverlay } from '@/components/pokemon-splash';
+import { CompareHistoryProvider } from '@/providers/compare-history';
 import { FavoritesProvider } from '@/providers/favorites';
 import { RecentlyViewedProvider } from '@/providers/recently-viewed';
 import { ThemePreferenceProvider } from '@/providers/theme-preference';
@@ -33,7 +34,9 @@ export default function RootLayout() {
       <ThemePreferenceProvider>
         <FavoritesProvider>
           <RecentlyViewedProvider>
-            <ThemedApp />
+            <CompareHistoryProvider>
+              <ThemedApp />
+            </CompareHistoryProvider>
           </RecentlyViewedProvider>
         </FavoritesProvider>
       </ThemePreferenceProvider>

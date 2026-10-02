@@ -134,15 +134,9 @@ function RecordStat({
 
 // Every past matchup that includes this Pokémon, plus its win/loss record.
 export function PokemonCompareHistory({ id, colors }: { id: number; colors: ScreenTheme }) {
-  const { history, removeComparison } = useCompareHistory();
+  const { history, getRecord, removeComparison } = useCompareHistory();
   const items = history.filter((e) => e.a.id === id || e.b.id === id);
-
-  const record = { wins: 0, losses: 0, ties: 0 };
-  for (const e of items) {
-    if (e.winner === 'tie') record.ties++;
-    else if ((e.winner === 'a' ? e.a.id : e.b.id) === id) record.wins++;
-    else record.losses++;
-  }
+  const record = getRecord(id);
 
   if (items.length === 0) {
     return (
@@ -171,7 +165,7 @@ export function PokemonCompareHistory({ id, colors }: { id: number; colors: Scre
       <View className="flex-row gap-2">
         <RecordStat label="Wins" value={record.wins} color="#16A34A" colors={colors} />
         <RecordStat label="Losses" value={record.losses} color="#DC2626" colors={colors} />
-        <RecordStat label="Ties" value={record.ties} color={colors.text} colors={colors} />
+        <RecordStat label="Draws" value={record.draws} color={colors.text} colors={colors} />
       </View>
       {items.map((entry, index) => (
         <CompareHistoryRow
